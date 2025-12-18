@@ -131,4 +131,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        _logger.info("CTRL+C: modbus bridge stopped.")
+        _logger.info("CTRL+C: modbus bridge exiting.")

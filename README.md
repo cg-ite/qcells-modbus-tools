@@ -15,7 +15,10 @@ Folgende Tools benötige ich dazu:
 
 Alle Tools können auch mehr oder weniger einzeln benutzt werden.
 
-Die config umfasst alle Tools, da ich alle benötige. 
+Die config umfasst alle Tools, da ich alle benötige. Das logging level ist zentral
+und gilt für alle Tools gemeinsam.
+
+Alle Skripte können zum debuggen einzeln aufgerufen werden.
 
 ## 1. Modbus RTU to TCP bridge
 Der WR kann über modbus rtu mit dem passenden HA addon ausgelesen werden. Da mein HA nicht im Keller steht und ich kein Kabel nach oben legen wollte, wird eine modbus bridge aus der python lib pymodbus verwendet. Diese läuft als systemd Dienst.
@@ -37,3 +40,27 @@ Die Konfiguration erfolgt über eine json Datei:
             }
 }
 ```
+
+## 2. DTSU666 Modbusreader
+Einfache Klasse für das Auslesen eines DTSU666 per Modbus RTU. Wird von der Mqtt-Bridge 
+benutzt, um die Daten des DTSU auszulesen und an einen Mqtt-Server zu schicken.
+
+Zum Testen der Verbindung zum DTSU `uv run dtsu666reader.py` aufrufen.
+Im Erfolgsfall werden alle verfügbaren Daten des DTSU angezeigt.
+
+Die Konfiguration erfolgt über eine json Datei:
+```json
+{"dtsu": {
+        "device_id": 1,
+        "port": "/dev/ttyS0",
+        "baudrate": 9600,
+        "parity": "N",
+        "stopbits": 1,
+        "timeout": 1
+    },
+    "logging": {
+        "level": 10
+    }
+}
+```
+## 3. Mqtt-Bridge
