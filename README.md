@@ -9,7 +9,7 @@ Um alle Geräte in den Home Assistant zu integrieren, war allerdings etwas Reche
 
 Folgende Tools benötige ich dazu:
 1. [Modbus Bridge from rtu to tcp](docs/modbus-bridge.md)
-2. DTSU666 modbus reader
+2. [DTSU666 modbus reader](docs/dtsu666-reader.md)
 3. Mqtt bridge for the dtsu666
 4. Shelly 3em pro adapter for the Marstek Akku to get the energy data from the dtsu666
 
@@ -18,26 +18,5 @@ Alle Tools können auch mehr oder weniger einzeln benutzt werden.
 Die config umfasst alle Tools, da ich alle benötige. Das logging level ist zentral
 und gilt für alle Tools gemeinsam.
 
-## 2. DTSU666 Modbusreader
-Einfache Klasse für das Auslesen eines DTSU666 per Modbus RTU. Wird von der Mqtt-Bridge 
-benutzt, um die Daten des DTSU auszulesen und an einen Mqtt-Server zu schicken.
 
-Zum Testen der Verbindung zum DTSU `uv run dtsu666reader.py` aufrufen.
-Im Erfolgsfall werden alle verfügbaren Daten des DTSU angezeigt.
-
-Die Konfiguration erfolgt über eine json Datei:
-```json
-{"dtsu": {
-        "device_id": 1,
-        "port": "/dev/ttyS0",
-        "baudrate": 9600,
-        "parity": "N",
-        "stopbits": 1,
-        "timeout": 1
-    },
-    "logging": {
-        "level": 10
-    }
-}
-```
 ## 3. Mqtt-Bridge
