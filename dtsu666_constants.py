@@ -68,8 +68,25 @@ REGISTERS = {
     0x2044: {"name": "Frequency", "func": 3, "words": 2, "factor": 0.01},
 
     0x401E: {"name": "Total_Import_Energy", "func": 3, "words": 2, "factor": 1},
-    0x4028: {"name": "Total_Export_Energy", "func": 3, "words": 2, "factor": 1}
+    0x4020: {"name": "Import_Energy_A", "func": 3, "words": 2, "factor": 1},
+    0x4022: {"name": "Import_Energy_B", "func": 3, "words": 2, "factor": 1},
+    0x4024: {"name": "Import_Energy_C", "func": 3, "words": 2, "factor": 1},
+    0x4026: {"name": "Total_Net_Import_Energy", "func": 3, "words": 2, "factor": 1},
+
+    0x4028: {"name": "Total_Export_Energy", "func": 3, "words": 2, "factor": 1},
+    0x402A: {"name": "Export_Energy_A", "func": 3, "words": 2, "factor": 1},
+    0x402C: {"name": "Export_Energy_B", "func": 3, "words": 2, "factor": 1},
+    0x402E: {"name": "Export_Energy_C", "func": 3, "words": 2, "factor": 1},
+    0x4030: {"name": "Total_Net_Export_Energy", "func": 3, "words": 2, "factor": 1},
 }
+
+# list of address-ranges which can read in blocks
+BLOCK_STATS = [
+    {"address": 0x2000, "count": 34},
+    {"address": 0x202A, "count": 8},
+    {"address": 0x2044, "count": 2},
+    {"address": 0x401E, "count": 20},
+]
 
 # Optional: Liste aller Keys, z.B. für Iterationen
 ALL_KEYS = [
@@ -85,26 +102,33 @@ ALL_KEYS = [
     0x200E,  # CURRENT_PHASE_B
     0x2010,  # CURRENT_PHASE_C
 
+    0x2012,  # TOTAL_ACTIVE_POWER
     0x2014,  # ACTIVE_POWER_PHASE_A
     0x2016,  # ACTIVE_POWER_PHASE_B
     0x2018,  # ACTIVE_POWER_PHASE_C
 
+    0x201A,  # TOTAL_REACTIVE_POWER
     0x201C,  # REACTIVE_POWER_PHASE_A
     0x201E,  # REACTIVE_POWER_PHASE_B
     0x2020,  # REACTIVE_POWER_PHASE_C
 
+    0x202A,  # TOTAL_POWER_FACTOR
     0x202C,  # POWER_FACTOR_PHASE_A
     0x202E,  # POWER_FACTOR_PHASE_B
     0x2030,  # POWER_FACTOR_PHASE_C
 
-    0x2012,  # TOTAL_ACTIVE_POWER
-    0x201A,  # TOTAL_REACTIVE_POWER
-    0x202A,  # TOTAL_POWER_FACTOR
-
     0x2044,  # FREQUENCY
 
     0x401E,  # TOTAL_IMPORT_ENERGY
+    0x4020,
+    0x4022,
+    0x4024,
+    0x4026,
     0x4028,  # TOTAL_EXPORT_ENERGY
+    0x402A,
+    0x402C,
+    0x402E,
+    0x4030,
 ]
 
 FOUR_WIRE_KEYS = [
@@ -116,24 +140,31 @@ FOUR_WIRE_KEYS = [
     0x200E,  # CURRENT_PHASE_B
     0x2010,  # CURRENT_PHASE_C
 
+    0x2012,  # TOTAL_ACTIVE_POWER
     0x2014,  # ACTIVE_POWER_PHASE_A
     0x2016,  # ACTIVE_POWER_PHASE_B
     0x2018,  # ACTIVE_POWER_PHASE_C
 
+    0x201A,  # TOTAL_REACTIVE_POWER
     0x201C,  # REACTIVE_POWER_PHASE_A
     0x201E,  # REACTIVE_POWER_PHASE_B
     0x2020,  # REACTIVE_POWER_PHASE_C
 
+    0x202A,  # TOTAL_POWER_FACTOR
     0x202C,  # POWER_FACTOR_PHASE_A
     0x202E,  # POWER_FACTOR_PHASE_B
     0x2030,  # POWER_FACTOR_PHASE_C
 
-    0x2012,  # TOTAL_ACTIVE_POWER
-    0x201A,  # TOTAL_REACTIVE_POWER
-    0x202A,  # TOTAL_POWER_FACTOR
-
     0x2044,  # FREQUENCY
 
     0x401E,  # TOTAL_IMPORT_ENERGY
+    0x4020,
+    0x4022,
+    0x4024,
+    0x4026,
     0x4028,  # TOTAL_EXPORT_ENERGY
+    0x402A,
+    0x402C,
+    0x402E,
+    0x4030,
 ]

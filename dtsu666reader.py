@@ -10,7 +10,8 @@ from pymodbus import (
 )
 
 from config import load_config
-from dtsu666_constants import FOUR_WIRE_KEYS, REGISTERS, ACTIVE_POWER_PHASE_A, ACTIVE_POWER_ALL, TOTAL_ACTIVE_POWER
+from dtsu666_constants import FOUR_WIRE_KEYS, REGISTERS, ACTIVE_POWER_PHASE_A, ACTIVE_POWER_ALL, TOTAL_ACTIVE_POWER, \
+    BLOCK_STATS
 
 CONFIG_FILE = "config.json"
 _logger = logging.getLogger("dtsu666reader")
@@ -97,6 +98,14 @@ class Dtsu666Reader:
             except Exception as e:
                 _logger.error(f"Read error@ {address}: Exception {e} ")
                 data[address] = None
+        return data
+
+    async def read_stats(self):
+        """Reads efficiently all values from the DTSU666 in blocks, but
+        without multiplying the right factor"""
+        data = {}
+        for block in BLOCK_STATS:
+            data[block["address"]] = self.read_value(block["address"], block["count"])
         return data
 
     async def read_value(self, address, count=1, factor=1.0):
