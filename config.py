@@ -11,7 +11,8 @@ def load_config():
     else:
         # fallback default
         return {
-    "reader": {
+    "dtsu": {
+        "device_id": 1,
         "port": "/dev/ttyS0",
         "baudrate": 9600,
         "parity": "N",
@@ -39,7 +40,7 @@ def load_config():
     "modbus-bridge": {
         "log-level": 10,
         "device_ids": [1],
-        "tcp-ip": "127.0.0.1",
+        "tcp-ip": "192.168.1.24",
         "tcp-port": 502,
         "rtu-port": "/dev/ttyUSB0",
         "rtu-baudrate": 9600,
@@ -51,6 +52,7 @@ def load_config():
         "level": 10
     }
 }
+
 
 # Log-level cheatsheet
 # CRITICAL = 50

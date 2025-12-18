@@ -1,5 +1,6 @@
 {
-    "reader": {
+    "dtsu": {
+        "device_id": 1,
         "port": "/dev/ttyS0",
         "baudrate": 9600,
         "parity": "N",
