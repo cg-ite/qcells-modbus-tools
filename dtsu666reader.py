@@ -10,7 +10,7 @@ from pymodbus import (
 )
 
 from config import load_config
-from dtsu666_constants import FOUR_WIRE_KEYS, REGISTERS, ACTIVE_POWER_PHASE_A, ACTIVE_POWER_ALL, TOTAL_ACTIVE_POWER, \
+from dtsu666_constants import FOUR_WIRE_KEYS, REGISTERS, TOTAL_ACTIVE_POWER, \
     BLOCK_STATS
 
 CONFIG_FILE = "config.json"
@@ -105,7 +105,7 @@ class Dtsu666Reader:
         without multiplying the right factor"""
         data = {}
         for block in BLOCK_STATS:
-            data[block["address"]] = self.read_value(block["address"], block["count"])
+            data[block["address"]] = await self.read_value(block["address"], block["count"])
         return data
 
     async def read_value(self, address, count=1, factor=1.0):
@@ -149,7 +149,7 @@ async def main():
     )
 
     await reader.connect()
-    values = await reader.read_value(0x2000, 34, 1.0)
+    values = await reader.read_stats()
     print(values)
     reader.close()
 
