@@ -8,7 +8,7 @@ Dazu habe ich mir nach gut einem Jahr einen Akku Marstek Venus V3 gekauft, da me
 Um alle Geräte in den Home Assistant zu integrieren, war allerdings etwas Recherche und Programmierung angesagt, da mein HA nicht im Keller neben dem WR steht. Dafür steht dort unser Home-Server, mit dem ich auf alle Geräte zugreifen und die Daten an den HA weiterreichen kann.
 
 Folgende Tools benötige ich dazu:
-1. Modbus Bridge from rtu to tcp
+1. [Modbus Bridge from rtu to tcp](docs/modbus-bridge.md)
 2. DTSU666 modbus reader
 3. Mqtt bridge for the dtsu666
 4. Shelly 3em pro adapter for the Marstek Akku to get the energy data from the dtsu666
