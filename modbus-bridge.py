@@ -9,6 +9,8 @@ uv run modbus-bridge.py
 import asyncio
 import logging
 import signal
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 from pymodbus import ModbusDeviceIdentification
 from pymodbus.client import ModbusSerialClient
@@ -41,13 +43,18 @@ class SerialForwarderTCPServer:
 
         self.server_task = None
         self.stop_event = asyncio.Event()
+        self.setup_logging(cfg["log-level"])
 
         client = ModbusSerialClient(framer=FramerType.RTU,
                                     port=self.cfg["rtu-port"],
                                     baudrate=self.cfg["rtu-baudrate"],
                                     bytesize=self.cfg["rtu-bytesize"],
                                     parity=self.cfg["rtu-parity"],
-                                    stopbits=self.cfg["rtu-stopbits"])
+                                    stopbits=self.cfg["rtu-stopbits"],
+                                    timeout = 1.2,  # > 1s Response timeout laut Doku
+                                    retries = 0,  # KEINE Wiederholungen (sonst Timing kaputt)
+                                    )
+
         message = f"RTU bus on {self.cfg["rtu-port"]} - baudrate {self.cfg["rtu-baudrate"]}"
         _logger.info(message)
         store = {}
@@ -68,6 +75,38 @@ class SerialForwarderTCPServer:
             context=context,
             address=(self.cfg["tcp-ip"], self.cfg["tcp-port"]),
         )
+
+    def setup_logging(self, log_level):
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
+
+        fmt = logging.Formatter(
+            "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+        )
+
+        # === Journal / stdout ===
+        console = logging.StreamHandler()
+        console.setLevel(log_level)
+        console.setFormatter(fmt)
+        root.addHandler(console)
+
+        # === Debug-Log-Datei ===
+        log_dir = Path("/var/log/modbus-bridge")
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        debug_file = RotatingFileHandler(
+            log_dir / "debug.log",
+            maxBytes=5 * 1024 * 1024,  # 5 MB
+            backupCount=5,
+        )
+        debug_file.setLevel(logging.DEBUG)
+        debug_file.setFormatter(fmt)
+        root.addHandler(debug_file)
+
+        logging.getLogger("pymodbus").setLevel(logging.WARNING)
+        if log_level == logging.DEBUG:
+            logging.getLogger("pymodbus.transport").setLevel(logging.DEBUG)
+            logging.getLogger("pymodbus.framer").setLevel(logging.DEBUG)
 
     async def start(self):
         """Run the server"""
