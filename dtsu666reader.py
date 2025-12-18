@@ -10,7 +10,7 @@ from pymodbus import (
 )
 
 from config import load_config
-from dtsu666_constants import FOUR_WIRE_KEYS, REGISTERS, ACTIVE_POWER_PHASE_A, ACTIVE_POWER_ALL
+from dtsu666_constants import FOUR_WIRE_KEYS, REGISTERS, ACTIVE_POWER_PHASE_A, ACTIVE_POWER_ALL, TOTAL_ACTIVE_POWER
 
 CONFIG_FILE = "config.json"
 _logger = logging.getLogger("dtsu666reader")
@@ -49,8 +49,7 @@ class Dtsu666Reader:
 
     async def read_actpowers_block(self):
         """ reads the act-power values with one modbus query for the shelly """
-        address = ACTIVE_POWER_ALL
-        data = []
+        address = TOTAL_ACTIVE_POWER
         spec = REGISTERS[address]
         try:
             rr = await self.instrument.read_holding_registers(address,
@@ -58,9 +57,10 @@ class Dtsu666Reader:
                                                               device_id=self.device_id)
 
             if not isinstance(rr, ReadHoldingRegistersResponse):
+                _logger.warning(f"Read error: no RegisterResponse @ {address}")
                 return None
             if not rr or rr.isError():
-                _logger.warning(f"Read error from DTSU666 @ {address}")
+                _logger.warning(f"Read error: isError @ {address} Error-code:{rr.exception_code}")
                 return None
 
             raw = self.instrument.convert_from_registers(
@@ -68,7 +68,7 @@ class Dtsu666Reader:
                 data_type = self.instrument.DATATYPE.FLOAT32)
             data = [spec["factor"] * p for p in raw]
         except Exception as e:
-            print(f"Read error {address}: {e}")
+            _logger.error(f"Read error@ {address}: Exception {e} ")
             data = None
         return data
 
@@ -83,10 +83,11 @@ class Dtsu666Reader:
                                                                   device_id=self.device_id)
 
                 if not isinstance(rr, ReadHoldingRegistersResponse):
+                    _logger.warning(f"Read error: no RegisterResponse @ {address}")
                     continue
                 if not rr or rr.isError():
-                    _logger.warning(f"Read error from DTSU666 @ {address}")
-                    return [0] * count
+                    _logger.warning(f"Read error: isError @ {address} Error-code:{rr.exception_code}")
+                    return None
 
                 raw = self.instrument.convert_from_registers(
                     rr.registers, word_order='big',
@@ -94,36 +95,37 @@ class Dtsu666Reader:
                     string_encoding="ascii")
                 data[address] = raw * spec["factor"]
             except Exception as e:
-                print(f"Read error {address}: {e}")
+                _logger.error(f"Read error@ {address}: Exception {e} ")
                 data[address] = None
         return data
 
-    async def read_values2(self, count=1):
-            """Reads the most important values from the DTSU666"""
-            data = {}
-            address = 0x2013
-            try:
-                rr = await self.instrument.read_holding_registers(address,
-                                                                  count=8,
-                                                                  device_id=self.device_id)
+    async def read_value(self, address, count=1, factor=1.0):
+        """Reads all register starting at address from the DTSU666, mostly for debugging reason """
+        data = []
+        try:
+            rr = await self.instrument.read_holding_registers(address,
+                                                              count=count,
+                                                              device_id=self.device_id)
 
-                if not isinstance(rr, ReadHoldingRegistersResponse):
-                    return
-                if not rr or rr.isError():
-                    _logger.warning(f"Read error from DTSU666 @ {address}")
-                    return [0] * count
+            if not isinstance(rr, ReadHoldingRegistersResponse):
+                _logger.warning(f"Read error: no RegisterResponse @ {address}")
+                return None
+            if not rr or rr.isError():
+                _logger.warning(f"Read error: isError @ {address} Error-code:{rr.exception_code}")
+                return None
 
-                raw = self.instrument.convert_from_registers(
-                    rr.registers, word_order='big',
-                    data_type=self.instrument.DATATYPE.FLOAT32,
-                    string_encoding="ascii")
-
-                #data[address] = raw * 0.1
-                data = {f"{address + i:#06x}": v for i, v in enumerate(raw)}
-            except Exception as e:
-                print(f"Read error {address}: {e}")
-                data[address] = None
-            return data
+            raw = self.instrument.convert_from_registers(
+                rr.registers, word_order='big',
+                data_type=self.instrument.DATATYPE.FLOAT32,
+                string_encoding="ascii")
+            if isinstance(raw, list):
+                data = [factor * p for p in raw]
+            else:
+                data = raw * factor
+        except Exception as e:
+            _logger.error(f"Read error@ {address}: Exception {e} ")
+            data = None
+        return data
 
 async def main():
     """Reads the consumption data of a dtsu666 once"""
@@ -138,10 +140,8 @@ async def main():
     )
 
     await reader.connect()
-    values = await reader.read_values2()
-    if values:
-        for k, v in values.items():
-            print(f"{k:30}: {v:.3f}")
+    values = await reader.read_value(0x2000, 34, 1.0)
+    print(values)
     reader.close()
 
 def raise_graceful_exit(*_args):
