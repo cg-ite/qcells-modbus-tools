@@ -4,6 +4,7 @@ import threading
 import json
 from concurrent.futures import ThreadPoolExecutor
 
+from config import load_config
 from mqttbrigde import Dtsu666Service
 
 logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", level=logging.INFO)
@@ -137,3 +138,15 @@ class Shelly:
             self._udp_thread.join()
             self._udp_thread = None
         self._executor.shutdown(wait=True)
+
+if __name__ == "__main__":
+    config = load_config()
+    dtsu = Dtsu666Service(config)
+    shelly = Shelly(cfg=config, powermeter=dtsu)
+
+    try:
+        shelly.start()
+    except KeyboardInterrupt:
+        shelly.join()
+        shelly.stop()
+        logger.info("Emulator stopped.")
