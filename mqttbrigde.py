@@ -3,6 +3,7 @@ import json
 import logging
 import time
 
+from config import load_config
 from dtsu666_constants import BLOCK_STATS, REGISTERS
 from dtsu666reader import Dtsu666Reader
 
@@ -142,3 +143,13 @@ class Dtsu666Service:
         # nur primitive Typen → threadsafe genug
         cache = self._cache
         return list(cache.get("powers", [0,0,0,0]))
+
+if __name__ == "__main__":
+    config = load_config()
+    dtsu = Dtsu666Service(config)
+
+    try:
+        dtsu.start()
+    except KeyboardInterrupt:
+        dtsu.stop()
+        _logger.info("Emulator stopped.")
