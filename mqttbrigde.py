@@ -144,12 +144,34 @@ class Dtsu666Service:
         cache = self._cache
         return list(cache.get("powers", [0,0,0,0]))
 
-if __name__ == "__main__":
+async def main():
     config = load_config()
-    dtsu = Dtsu666Service(config)
+
+    mqtt_cfg = config.get("mqtt")
+    mqtt_client = None
+
+    if mqtt_cfg:
+        mqtt_client = create_mqtt_client(mqtt_cfg)
+        await mqtt_client.__aenter__()  # aiomqtt Client starten
+
+    service = Dtsu666Service(
+        config,
+        mqtt_client=mqtt_client,
+        mqtt_topic="dtsu666"
+    )
+
+    await service.start()
 
     try:
-        dtsu.start()
+        # läuft "für immer"
+        await asyncio.Event().wait()
     except KeyboardInterrupt:
-        dtsu.stop()
-        _logger.info("Emulator stopped.")
+        pass
+    finally:
+        await service.stop()
+        if mqtt_client:
+            await mqtt_client.__aexit__(None, None, None)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
