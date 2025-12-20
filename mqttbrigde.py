@@ -3,6 +3,9 @@ import json
 import logging
 import time
 
+from dtsu666_constants import BLOCK_STATS, REGISTERS
+from dtsu666reader import Dtsu666Reader
+
 _logger = logging.getLogger("dtsu666service")
 
 from asyncio_mqtt import Client as MQTTClient
@@ -20,19 +23,19 @@ class Dtsu666Service:
 
     def __init__(
             self,
-            reader,
+            cfg,
             interval_ms=250,
             full_interval_s=15,
             mqtt_client=None,
             mqtt_topic="dtsu666/full",
     ):
-        self.reader = reader
+        self.reader = Dtsu666Reader(cfg['dtsu'])
 
         self.interval = interval_ms / 1000.0
         self.full_interval = full_interval_s
 
         self.mqtt_client = mqtt_client
-        self.mqtt_topic = mqtt_topic
+        self.mqtt_prefix = mqtt_topic
 
         self._task: asyncio.Task | None = None
         self._running = asyncio.Event()
@@ -41,15 +44,13 @@ class Dtsu666Service:
         self._cache_lock = asyncio.Lock()
         self._cache = {
             "timestamp": None,
-            "powers": None,
+            "powers": [0,0,0,0],
             "full": None,
         }
 
-    # --------------------------------------------------
-
     async def start(self):
         _logger.info("Starting DTSU666 service")
-        await self.reader.connect()
+        await self.reader.start()
 
         self._running.set()
         self._task = asyncio.create_task(self._run_loop())
@@ -65,13 +66,10 @@ class Dtsu666Service:
             except asyncio.CancelledError:
                 pass
 
-        self.reader.close()
-
-    # --------------------------------------------------
-    # Single polling loop
-    # --------------------------------------------------
+        await  self.reader.stop()
 
     async def _run_loop(self):
+        """ Reads the powers every 0.250 sec and all stats every 15 sec """
         _logger.info("Polling loop started (250ms)")
 
         try:
@@ -81,7 +79,7 @@ class Dtsu666Service:
 
                 try:
                     if now - self._last_full_read >= self.full_interval:
-                        data = await self.reader.read_values()
+                        data = await self.reader.read_stats()
                         if data is not None:
                             await self._update_cache("full", data)
                             self._last_full_read = now
@@ -98,32 +96,38 @@ class Dtsu666Service:
                     _logger.exception("Polling error")
 
                 elapsed = asyncio.get_running_loop().time() - loop_start
-                await asyncio.sleep(max(0, self.interval - elapsed))
+                await asyncio.sleep(max(0.0, self.interval - elapsed))
 
         except asyncio.CancelledError:
             _logger.info("Polling loop cancelled")
 
+    async def _publish(self, topic, payload):
+        await self.mqtt_client.publish(
+            topic,
+            json.dumps(payload),
+            qos=1,
+            retain=True,
+        )
+
     async def _publish_full_read_mqtt(self, data):
+        """publishes all data to mqtt"""
         if not self.mqtt_client:
             return
 
-        payload = {
-            "timestamp": time.time(),
-            "values": data,
-        }
+        for block in BLOCK_STATS:
+            # Adressen pro block berechnen, count/2 da jede Adresse zwei register lang ist
+            addresses = [block['address'] + i * 2 for i in range(block['count']/2)]
 
-        try:
-            await self.mqtt_client.publish(
-                self.mqtt_topic,
-                json.dumps(payload),
-                qos=1,
-            )
-        except Exception:
-            _logger.exception("MQTT publish failed")
+            for i, adr in enumerate(addresses):
+                value = block['values'][i] * REGISTERS[adr]['factor']
+                try:
+                    await self._publish(
+                        f"{self.mqtt_prefix}/{REGISTERS[adr]['name']}", {
+                        f"{REGISTERS[adr]['name']}": value
+                    })
 
-        # --------------------------------------------------
-        # Cache
-        # --------------------------------------------------
+                except Exception as e:
+                    _logger.exception(f"Topic: {self.mqtt_prefix}/{REGISTERS[adr]['name']}, ex: {e}", e)
 
     async def _update_cache(self, key, data):
         async with self._cache_lock:
@@ -133,3 +137,8 @@ class Dtsu666Service:
     async def get_cache(self):
         async with self._cache_lock:
             return dict(self._cache)
+
+    def get_cache_powers(self):
+        # nur primitive Typen → threadsafe genug
+        cache = self._cache
+        return list(cache.get("powers", [0,0,0,0]))

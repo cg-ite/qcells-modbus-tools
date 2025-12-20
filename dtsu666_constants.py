@@ -41,6 +41,7 @@ REGISTERS = {
     0x2000: {"name": "Voltage_Phase_AB", "func": 3, "words": 2, "factor": 0.1},
     0x2002: {"name": "Voltage_Phase_BC", "func": 3, "words": 2, "factor": 0.1},
     0x2004: {"name": "Voltage_Phase_CA", "func": 3, "words": 2, "factor": 0.1},
+
     0x2006: {"name": "Voltage_Phase_A",  "func": 3, "words": 2, "factor": 0.1},
     0x2008: {"name": "Voltage_Phase_B",  "func": 3, "words": 2, "factor": 0.1},
     0x200A: {"name": "Voltage_Phase_C",  "func": 3, "words": 2, "factor": 0.1},
@@ -132,6 +133,44 @@ ALL_KEYS = [
 ]
 
 FOUR_WIRE_KEYS = [
+    0x2006,  # VOLTAGE_PHASE_A
+    0x2008,  # VOLTAGE_PHASE_B
+    0x200A,  # VOLTAGE_PHASE_C
+
+    0x200C,  # CURRENT_PHASE_A
+    0x200E,  # CURRENT_PHASE_B
+    0x2010,  # CURRENT_PHASE_C
+
+    0x2012,  # TOTAL_ACTIVE_POWER
+    0x2014,  # ACTIVE_POWER_PHASE_A
+    0x2016,  # ACTIVE_POWER_PHASE_B
+    0x2018,  # ACTIVE_POWER_PHASE_C
+
+    0x201A,  # TOTAL_REACTIVE_POWER
+    0x201C,  # REACTIVE_POWER_PHASE_A
+    0x201E,  # REACTIVE_POWER_PHASE_B
+    0x2020,  # REACTIVE_POWER_PHASE_C
+
+    0x202A,  # TOTAL_POWER_FACTOR
+    0x202C,  # POWER_FACTOR_PHASE_A
+    0x202E,  # POWER_FACTOR_PHASE_B
+    0x2030,  # POWER_FACTOR_PHASE_C
+
+    0x2044,  # FREQUENCY
+
+    0x401E,  # TOTAL_IMPORT_ENERGY
+    0x4020,
+    0x4022,
+    0x4024,
+    0x4026,
+    0x4028,  # TOTAL_EXPORT_ENERGY
+    0x402A,
+    0x402C,
+    0x402E,
+    0x4030,
+]
+# only this keys will
+MQTT_TOPICS = [
     0x2006,  # VOLTAGE_PHASE_A
     0x2008,  # VOLTAGE_PHASE_B
     0x200A,  # VOLTAGE_PHASE_C

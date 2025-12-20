@@ -12,7 +12,7 @@
         "port": 1883,
         "username": "user",
         "password": "pass",
-        "topic_prefix": "dtsu666"
+        "topic_prefix": "DTSU666"
     },
     "poll_interval": 30,
     "device": {
