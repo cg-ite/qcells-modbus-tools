@@ -189,8 +189,8 @@ def raise_graceful_exit(*_args):
 @dataclass
 class ModbusReading:
     """ Simple class for a modbusreading with values and errorcode """
-    readings: Optional[List[float]]
-    error_code: Optional[int]
+    readings: Optional[List[float]] = None
+    error_code: Optional[int] = None
 
 if __name__ == "__main__":
     try:
