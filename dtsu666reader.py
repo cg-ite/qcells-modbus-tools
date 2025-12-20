@@ -3,6 +3,9 @@ import argparse
 import asyncio
 import logging
 import signal
+from dataclasses import dataclass
+from typing import List, Optional
+
 from pymodbus.pdu.register_message import ReadHoldingRegistersResponse
 import pymodbus.client as ModbusClient
 from pymodbus import (
@@ -108,8 +111,31 @@ class Dtsu666Reader:
             data[block["address"]] = await self.read_value(block["address"], block["count"])
         return data
 
+    def check_exception(self, result):
+        """Decode Modbus exception response."""
+        if not result.isError():
+            return None
+
+        exceptions = {
+            0x01: "Illegal Function - Function code not supported",
+            0x02: "Illegal Data Address - Address not allowed",
+            0x03: "Illegal Data Value - Value out of range",
+            0x04: "Slave Device Failure - Device error",
+            0x05: "Acknowledge - Request accepted, processing",
+            0x06: "Slave Device Busy - Try again later",
+            0x08: "Memory Parity Error - Device memory error",
+            0x0A: "Gateway Path Unavailable - Gateway error",
+            0x0B: "Gateway Target Failed - Target not responding"
+        }
+
+        code = getattr(result, 'exception_code', None)
+        if code:
+            return code
+        return None
+
     async def read_value(self, address, count=1, factor=1.0):
         """Reads all register starting at address from the DTSU666, mostly for debugging reason """
+        res = ModbusReading()
         data = []
         try:
             rr = await self.instrument.read_holding_registers(address,
@@ -120,8 +146,10 @@ class Dtsu666Reader:
                 _logger.warning(f"Read error: no RegisterResponse @ {address}")
                 return None
             if not rr or rr.isError():
-                _logger.warning(f"Read error: isError @ {address} Error-code:{rr.exception_code}")
-                return None
+                res.error_code = self.check_exception(rr)
+                if res.error_code is not None:
+                    _logger.warning(f"Read error: isError @ {address} Error-code:{res.error_code}")
+                    return res
 
             raw = self.instrument.convert_from_registers(
                 rr.registers, word_order='big',
@@ -157,6 +185,12 @@ def raise_graceful_exit(*_args):
     """Enters shutdown mode"""
     _logger.info("Receiving shutdown signal now.")
     raise SystemExit
+
+@dataclass
+class ModbusReading:
+    """ Simple class for a modbusreading with values and errorcode """
+    readings: Optional[List[float]]
+    error_code: Optional[int]
 
 if __name__ == "__main__":
     try:

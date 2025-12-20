@@ -1,7 +1,9 @@
-sensor:
-  ...
   # taken from https://github.com/johann-CH/ESP32_DTSU666_Modbus_MQTT_HA_Integration
   # Smart Meter DTSU666 Converter States
+  # changes:
+  # - add more/all topics of my dtsu666
+sensor:
+  ...
   - name: 'DTSU666 Converter Modbus Errors 0xE0'
     unique_id: dtsu666_converter_modbus_errors_0xe0
     state_topic: 'DTSU666Converter/DTSU666_Modbus_Converter_Modbus_Errors_0xE0'

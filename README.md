@@ -20,3 +20,11 @@ und gilt für alle Tools gemeinsam.
 
 
 ## 3. Mqtt-Bridge
+
+## Links/References
+docs:
+- https://www.pymodbus.org/
+
+Libs/Projects:
+- https://github.com/johann-CH/ESP32_DTSU666_Modbus_MQTT_HA_Integration
+- https://github.com/tomquist/b2500-meter
