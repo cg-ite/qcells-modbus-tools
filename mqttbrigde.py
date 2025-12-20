@@ -8,7 +8,7 @@ from dtsu666reader import Dtsu666Reader
 
 _logger = logging.getLogger("dtsu666service")
 
-from asyncio_mqtt import Client as MQTTClient
+from aiomqtt import Client as MQTTClient
 
 def create_mqtt_client(cfg):
     return MQTTClient(
@@ -50,7 +50,7 @@ class Dtsu666Service:
 
     async def start(self):
         _logger.info("Starting DTSU666 service")
-        await self.reader.start()
+        await self.reader.connect()
 
         self._running.set()
         self._task = asyncio.create_task(self._run_loop())
@@ -66,7 +66,7 @@ class Dtsu666Service:
             except asyncio.CancelledError:
                 pass
 
-        await  self.reader.stop()
+        await  self.reader.close()
 
     async def _run_loop(self):
         """ Reads the powers every 0.250 sec and all stats every 15 sec """
@@ -85,15 +85,15 @@ class Dtsu666Service:
                             self._last_full_read = now
 
                             # 🔹 MQTT async publish (fire & forget)
-                            asyncio.create_task(self._publish_full_read_mqtt(data))
+                            #asyncio.create_task(self._publish_full_read_mqtt(data))
 
                     else:
                         data = await self.reader.read_actpowers_block()
                         if data is not None:
                             await self._update_cache("powers", data)
 
-                except Exception:
-                    _logger.exception("Polling error")
+                except Exception as e:
+                    _logger.exception(f"Polling error e:{e}")
 
                 elapsed = asyncio.get_running_loop().time() - loop_start
                 await asyncio.sleep(max(0.0, self.interval - elapsed))

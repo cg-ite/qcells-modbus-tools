@@ -4,7 +4,6 @@ import threading
 import json
 from concurrent.futures import ThreadPoolExecutor
 
-from dtsu666reader import Dtsu666Reader
 from mqttbrigde import Dtsu666Service
 
 logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", level=logging.INFO)
