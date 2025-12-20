@@ -5,7 +5,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 from config import load_config
-from mqttbrigde import Dtsu666Service
+from dtsu666service import Dtsu666Service
 
 logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", level=logging.INFO)
 logger = logging.getLogger("shelly")

@@ -1,7 +1,9 @@
+import argparse
 import asyncio
 import json
 import logging
 import time
+from logging import Logger
 
 from config import load_config
 from dtsu666_constants import BLOCK_STATS, REGISTERS
@@ -28,7 +30,7 @@ class Dtsu666Service:
             interval_ms=250,
             full_interval_s=15,
             mqtt_client=None,
-            mqtt_topic="dtsu666/full",
+            mqtt_topic="DTSU666",
     ):
         self.reader = Dtsu666Reader(cfg['dtsu'])
 
@@ -67,7 +69,7 @@ class Dtsu666Service:
             except asyncio.CancelledError:
                 pass
 
-        await  self.reader.close()
+        self.reader.close()
 
     async def _run_loop(self):
         """ Reads the powers every 0.250 sec and all stats every 15 sec """
@@ -146,18 +148,31 @@ class Dtsu666Service:
 
 async def main():
     config = load_config()
+    logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                       level=config["logging"]["level"], )
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", type=bool, default=False,
+                        help="sets logging level to debug, for debugging from cmd",)
+    parser.add_argument("-m", "--mqtt", type=bool, default=False,
+                        help="enables mqtt client for publishing the data to a mqtt server",)
+    args = parser.parse_args()
+    if args.debug:
+        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                           level=logging.DEBUG, )
 
     mqtt_cfg = config.get("mqtt")
     mqtt_client = None
 
-    if mqtt_cfg:
-        mqtt_client = create_mqtt_client(mqtt_cfg)
-        await mqtt_client.__aenter__()  # aiomqtt Client starten
+    if args.mqtt:
+        if mqtt_cfg:
+            mqtt_client = create_mqtt_client(mqtt_cfg)
+            await mqtt_client.__aenter__()  # aiomqtt Client starten
 
     service = Dtsu666Service(
         config,
         mqtt_client=mqtt_client,
-        mqtt_topic="dtsu666"
+        mqtt_topic= config["mqtt"]["topic"],
     )
 
     await service.start()
