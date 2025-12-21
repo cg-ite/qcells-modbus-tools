@@ -141,6 +141,9 @@ class Shelly:
 
 if __name__ == "__main__":
     config = load_config()
+    logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                        level=config["logging"]["level"], )
+
     dtsu = Dtsu666Service(config)
     shelly = Shelly(cfg=config, powermeter=dtsu)
 
