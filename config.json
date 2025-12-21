@@ -15,6 +15,10 @@
         "topic_prefix": "DTSU666"
     },
     "poll_interval": 30,
+    "shelly": {
+        "device_id": 1,
+        "udp_port": 2220
+    },
     "device": {
         "id": 1
     },

@@ -36,7 +36,7 @@ class Shelly:
         powermeter: Dtsu666Service
     ):
         self._udp_port = cfg["shelly"]["udp_port"]
-        self._device_id = cfg["shelly"]["id"]
+        self._device_id = cfg["shelly"]["device_id"]
         self._powermeter = powermeter
         self._udp_thread = None
         self._stop = False

@@ -134,6 +134,7 @@ class Dtsu666Service:
 
     async def _update_cache(self, key, data):
         async with self._cache_lock:
+            _logger.debug(f"Updating cache: {key}, {data}")
             self._cache[key] = data
             self._cache["timestamp"] = time.time()
 
@@ -143,6 +144,7 @@ class Dtsu666Service:
 
     def get_cache_powers(self):
         # nur primitive Typen → threadsafe genug
+        _logger.debug(f"read powers from cache")
         cache = self._cache
         return list(cache.get("powers", [0,0,0,0]))
 
