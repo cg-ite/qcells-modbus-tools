@@ -20,40 +20,38 @@ Die Konfiguration erfolgt über eine json Datei:
 }
 ```
 ### systemd config
+Create user and group for service
+```
+groupadd -r modbus
+useradd -r -g modbus -d /var/lib/modbus -s /usr/sbin/nologin modbus
+usermod -aG dialout modbus
+groupadd dialout
+
+mkdir -p /etc/modbus-bridge
+mkdir -p /var/log/modbus-bridge
+chown -R modbus:modbus /etc/modbus-bridge /var/log/modbus-bridge
+```
+
 Create the file `sudo nano /etc/systemd/system/modbus-bridge.service` with contents:
 ```
 [Unit]
-Description=Modbus RTU to TCP Bridge
+Description=Modbus RTU → TCP Bridge
 After=network.target
-Wants=network.target
 
 [Service]
-Type=simple
-
-# User / Gruppe (empfohlen: NICHT root)
-User=root
-Group=root
-
-WorkingDirectory=/root/dtsu666-mqtt-gateway
-
-# uv verwenden
-ExecStart=/usr/bin/uv run modbus-bridge.py
-ExecStop=/bin/kill -SIGTERM $MAINPID
-
-# sauberes Stoppen
-KillSignal=SIGTERM
-TimeoutStopSec=10
-
-# Neustart-Strategie
+User=modbus
+Group=modbus
+ExecStart=/usr/bin/uv run /opt/modbus-bridge/modbus-bridge.py
+WorkingDirectory=/opt/modbus-bridge
 Restart=on-failure
-RestartSec=3
+RestartSec=5
 
-# Logging → journal
-StandardOutput=journal
-StandardError=journal
-
-# Environment
-Environment=PYTHONUNBUFFERED=1
+# Security Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/modbus-bridge
 
 [Install]
 WantedBy=multi-user.target
@@ -76,5 +74,9 @@ systemctl restart modbus-bridge
 
 # Sauber stoppen
 systemctl stop modbus-bridge
+
+# Zugriffsrechte von modbus user auf dongle
+sudo -u modbus cat /dev/ttyUSB0
+
 
 ```
