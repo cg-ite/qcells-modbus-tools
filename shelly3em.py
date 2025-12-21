@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import socket
 import threading
@@ -139,7 +140,7 @@ class Shelly:
             self._udp_thread = None
         self._executor.shutdown(wait=True)
 
-if __name__ == "__main__":
+async def main():
     config = load_config()
     logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
                         level=config["logging"]["level"], )
@@ -148,8 +149,17 @@ if __name__ == "__main__":
     shelly = Shelly(cfg=config, powermeter=dtsu)
 
     try:
+        await dtsu.start()
         shelly.start()
+        # läuft "für immer"
+        await asyncio.Event().wait()
     except KeyboardInterrupt:
+        pass
+    finally:
+        await dtsu.stop()
         shelly.join()
         shelly.stop()
         logger.info("Emulator stopped.")
+
+if __name__ == "__main__":
+    asyncio.run(main())
