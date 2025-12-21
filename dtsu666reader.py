@@ -177,10 +177,13 @@ async def main():
     await reader.connect()
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
                         help="sets logging level to debug, for debugging from cmd", )
     parser.add_argument("-p", "--power", type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
                         help="reads total active power block: total, phase a/b/c", )
     parser.add_argument("-s", "--stats", type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
                         help="reads whole stats blocks", )
     args = parser.parse_args()
 
