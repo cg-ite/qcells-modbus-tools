@@ -9,14 +9,20 @@ uv run modbus-bridge.py
 import asyncio
 import logging
 import signal
+import threading
+import time
+from enum import Enum
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from pymodbus import ModbusDeviceIdentification
+from pymodbus import ModbusDeviceIdentification, ExceptionResponse
 from pymodbus.client import ModbusSerialClient
+from pymodbus.exceptions import ModbusIOException
 from pymodbus.framer import FramerType
 from pymodbus.datastore import ModbusServerContext
 from pymodbus.datastore.remote import RemoteDeviceContext
+from pymodbus.pdu import ModbusPDU
+from pymodbus.pdu.register_message import ReadInputRegistersResponse
 from pymodbus.server import ModbusTcpServer, StartAsyncTcpServer
 
 from config import load_config
@@ -44,16 +50,18 @@ class SerialForwarderTCPServer:
         self.server_task = None
         self.stop_event = asyncio.Event()
         self.setup_logging(cfg["log-level"])
+        self.runmode = None
 
-        client = ModbusSerialClient(framer=FramerType.RTU,
+        raw_client = ModbusSerialClient(framer=FramerType.RTU,
                                     port=self.cfg["rtu-port"],
                                     baudrate=self.cfg["rtu-baudrate"],
                                     bytesize=self.cfg["rtu-bytesize"],
                                     parity=self.cfg["rtu-parity"],
                                     stopbits=self.cfg["rtu-stopbits"],
                                     timeout = 1.2,  # > 1s Response timeout laut Doku
-                                    retries = 0,  # KEINE Wiederholungen (sonst Timing kaputt)
+                                    retries = 1,  # KEINE Wiederholungen (sonst Timing kaputt)
                                     )
+        client = ThrottledSerialClient(raw_client, delay=0.02)
 
         message = f"RTU bus on {self.cfg["rtu-port"]} - baudrate {self.cfg["rtu-baudrate"]}"
         _logger.info(message)
@@ -131,6 +139,78 @@ class SerialForwarderTCPServer:
             except asyncio.CancelledError:
                 pass
             _logger.info("TCP server is down")
+
+class ThrottledSerialClient:
+    def __init__(self, client, delay=0.02):
+        self.client = client
+        self.delay = delay
+        self.lock = threading.Lock()
+        self.runmode = Runmode.WAIT_MODE
+
+    def read_input_registers(self, *args, **kwargs):
+        with self.lock:
+            try:
+                # address & count extrahieren
+                address = args[0] if len(args) > 0 else kwargs.get("address")
+                count = args[1] if len(args) > 1 else kwargs.get("count", 1)
+
+                result = self.client.read_input_registers(*args, **kwargs)
+                time.sleep(self.delay)
+                if not isinstance(result, ReadInputRegistersResponse):
+                    _logger.warning(f"Read error: no RegisterResponse @ {address}")
+                    return None
+                if not result or result.isError():
+                    error_code = self.check_exception(result)
+                    if error_code is not None:
+                        _logger.warning(f"Read error: isError @ {address} Error-code:{error_code}")
+                        return result
+
+                if address <= 0x040F < address + count:
+                    idx = 0x040F - address
+                    self.runmode = result.registers[idx]
+                    _logger.info(f"Runmode:{self.runmode}")
+
+                return result
+            except Exception as e:
+                if self.runmode == Runmode.NORMAL_MODE:
+                    _logger.error(f"Read error: Exception {e} ")
+                return ExceptionResponse(0x00, 0x04)
+
+    def read_holding_registers(self, *args, **kwargs):
+        with self.lock:
+            try:
+                result = self.client.read_holding_registers(*args, **kwargs)
+                time.sleep(self.delay)
+                return result
+
+            except ModbusIOException as e:
+                if self.runmode == Runmode.NORMAL_MODE:
+                    _logger.error(f"Read error: Exception {e} ")
+                # saubere Modbus-Exception zurückgeben
+                return ExceptionResponse(0x00, 0x04)
+        """exceptions = {
+            0x01: "Illegal Function - Function code not supported",
+            0x02: "Illegal Data Address - Address not allowed",
+            0x03: "Illegal Data Value - Value out of range",
+            0x04: "Slave Device Failure - Device error",
+            0x05: "Acknowledge - Request accepted, processing",
+            0x06: "Slave Device Busy - Try again later",
+            0x08: "Memory Parity Error - Device memory error",
+            0x0A: "Gateway Path Unavailable - Gateway error",
+            0x0B: "Gateway Target Failed - Target not responding"
+        }"""
+
+    def __getattr__(self, name):
+        # alles andere direkt durchreichen (connect, close, etc.)
+        return getattr(self.client, name)
+
+class Runmode(Enum):
+    """ Status mode of the Inverter"""
+    WAIT_MODE = 0
+    CHECK_MODE = 1
+    NORMAL_MODE = 2
+    FAULT_MODE = 3
+    PERMANENT_FAULT_MODE = 4
 
 async def main():
     config = load_config()
