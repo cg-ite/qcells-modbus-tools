@@ -153,8 +153,10 @@ async def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--debug", type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
                         help="sets logging level to debug, for debugging from cmd",)
     parser.add_argument("-m", "--mqtt", type=bool, default=False,
+                        action=argparse.BooleanOptionalAction,
                         help="enables mqtt client for publishing the data to a mqtt server",)
     args = parser.parse_args()
     if args.debug:
