@@ -172,7 +172,7 @@ async def main():
     service = Dtsu666Service(
         config,
         mqtt_client=mqtt_client,
-        mqtt_topic= config["mqtt"]["topic"],
+        mqtt_topic= config["mqtt"]["topic_prefix"],
     )
 
     await service.start()
