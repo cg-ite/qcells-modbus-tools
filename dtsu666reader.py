@@ -169,15 +169,29 @@ async def main():
 
     # load defaults from config.json
     config = load_config()
-    logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-        level=config["logging"]["level"],)
 
     reader = Dtsu666Reader(
         cfg=config["dtsu"]
     )
 
     await reader.connect()
-    values = await reader.read_stats()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--debug", type=bool, default=False,
+                        help="sets logging level to debug, for debugging from cmd", )
+    parser.add_argument("-p", "--power", type=bool, default=False,
+                        help="reads total active power block: total, phase a/b/c", )
+    parser.add_argument("-s", "--stats", type=bool, default=False,
+                        help="reads whole stats blocks", )
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                            level=config["logging"]["level"], )
+    values = None
+    if args.power:
+        values = await reader.read_actpowers_block()
+    if args.stats:
+        values = await reader.read_stats()
     print(values)
     reader.close()
 

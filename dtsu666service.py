@@ -27,7 +27,7 @@ class Dtsu666Service:
     def __init__(
             self,
             cfg,
-            interval_ms=250,
+            interval_ms=1000,
             full_interval_s=15,
             mqtt_client=None,
             mqtt_topic="DTSU666",
