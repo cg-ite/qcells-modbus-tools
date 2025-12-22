@@ -23,40 +23,95 @@ Die Konfiguration erfolgt über eine json Datei:
 Create user and group for service
 ```
 groupadd -r modbus
-useradd -r -g modbus -d /var/lib/modbus -s /usr/sbin/nologin modbus
+useradd -r -m -d /var/lib/modbus modbus
 usermod -aG dialout modbus
-groupadd dialout
+# groupadd dialout
 
 mkdir -p /etc/modbus-bridge
 mkdir -p /var/log/modbus-bridge
 chown -R modbus:modbus /etc/modbus-bridge /var/log/modbus-bridge
+
+nano /etc/passwd -> groupid userid modbus
+
+```
+Dann in Proxmox gui unter resources device hinzufügen mit dem Userid und groupid
+
+```
+mkdir -p /opt/qcells-modbus-tools
+cd /opt
+git clone https://github.com/cg-ite/qcells-modbus-tools.git
+chown -R modbus:modbus /opt/qcells-modbus-tools
+
+
+# Dependencys installieren
+su -s /bin/bash modbus
+
+# optional uv installieren
+curl -Ls https://astral.sh/uv/install.sh | sh
+wget -qO- https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+
+cd /opt/qcells-modbus-tools
+uv add pyserial
+uv sync
+uv run modbus-bridge.py -d
+exit
+
+# test connection and rights
+su -s /bin/bash modbus -c "cd /opt/qcells-modbus-tools && /var/lib/modbus/.local/bin/uv run modbus_bridge.py -d"
+
 ```
 
-Create the file `sudo nano /etc/systemd/system/modbus-bridge.service` with contents:
+Create the file `sudo micro /etc/systemd/system/qmt-modbus-bridge.service` with contents:
 ```
+# /etc/systemd/system/qmt-modbus-bridge.service
 [Unit]
-Description=Modbus RTU → TCP Bridge
+Description=QCells Modbus Bridge (qmt namespace)
 After=network.target
+Wants=network-online.target
 
 [Service]
+Type=simple
 User=modbus
 Group=modbus
-ExecStart=/usr/bin/uv run /opt/modbus-bridge/modbus-bridge.py
-WorkingDirectory=/opt/modbus-bridge
-Restart=on-failure
+WorkingDirectory=/opt/qcells-modbus-tools
+ExecStart=/var/lib/modbus/.local/bin/uv run modbus-bridge.py
+Restart=always
 RestartSec=5
-
-# Security Hardening
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/log/modbus-bridge
+# Logging über Journalctl
+StandardOutput=journal
+StandardError=journal
+# Optional: Limits für Ressourcennutzung
+# LimitNOFILE=4096
+# LimitNPROC=512
 
 [Install]
 WantedBy=multi-user.target
 
+# cmd
+systemctl daemon-reload
+systemctl enable qmt-modbus-bridge
+systemctl start qmt-modbus-bridge
+
+# debug service
+systemctl status qmt-modbus-bridge
 ```
+
+Edit config.json and set the desired loglevel:
+```
+# Log-level cheatsheet
+CRITICAL = 50
+FATAL = CRITICAL
+ERROR = 40
+WARNING = 30
+WARN = WARNING
+INFO = 20
+DEBUG = 10
+NOTSET = 0
+```
+
+check `micro /var/log/modbus-bridge/debug.log` for errors, warnings and infos.
+
 ### Debug hints
 Die bridge kann mit `uv run modbus-bridge.py` zum Testen gestartet werden.
 ```
