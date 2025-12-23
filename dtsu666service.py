@@ -143,7 +143,7 @@ class Dtsu666Service:
             self._cache["timestamp"] = time.time()
 
         if key == "powers":
-            _logger.info(f"Updating cache: {key}, {data}")
+            _logger.debug(f"Updating cache: {key}, {data}")
             with self._powers_lock:
                 self._powers_atomic = list(data)
 
