@@ -32,8 +32,8 @@ class Dtsu666Service:
             mqtt_client=None,
             mqtt_topic="DTSU666",
     ):
-        self.reader = Dtsu666Reader(cfg['dtsu'])
-
+        self.reader = None # Dtsu666Reader(cfg['dtsu']) -> falscher thread/event loop bei Aufruf von shelly
+        self.dtsu_conf = cfg['dtsu']
         self.interval = interval_ms / 1000.0
         self.full_interval = full_interval_s
 
@@ -53,6 +53,7 @@ class Dtsu666Service:
 
     async def start(self):
         _logger.info("Starting DTSU666 service")
+        self.reader = Dtsu666Reader(self.dtsu_conf)
         await self.reader.connect()
 
         self._running.set()
@@ -73,7 +74,7 @@ class Dtsu666Service:
 
     async def _run_loop(self):
         """ Reads the powers every 0.250 sec and all stats every 15 sec """
-        _logger.info("Polling loop started (250ms)")
+        _logger.info(f"Polling loop started ({self.interval}s)")
 
         try:
             while self._running.is_set():
