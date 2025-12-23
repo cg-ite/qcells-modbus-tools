@@ -143,7 +143,8 @@ class Shelly:
 
 async def main():
     config = load_config()
-
+    logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                        level=config["logging"]["level"], )
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d", "--debug", default=False,
@@ -151,12 +152,8 @@ async def main():
         help="sets logging level to debug, for debugging from cmd", )
     args = parser.parse_args()
     if args.debug:
-        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                           level=logging.DEBUG, )
-        config["logging"]["level"] = logging.DEBUG
-    else:
-        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                            level=config["logging"]["level"], )
+        logging.getLogger("dtsu666service").setLevel(logging.DEBUG)
+        logging.getLogger("shelly").setLevel(logging.DEBUG)
 
     dtsu = Dtsu666Service(config)
     shelly = Shelly(cfg=config, powermeter=dtsu)
