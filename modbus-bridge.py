@@ -88,6 +88,9 @@ class SerialForwarderTCPServer:
         root = logging.getLogger()
         root.setLevel(logging.DEBUG)
 
+        if root.handlers:
+            return  # verhindert doppelte Handler
+
         fmt = logging.Formatter(
             "%(asctime)s %(levelname)s [%(name)s] %(message)s"
         )
