@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import json
 import logging
+import threading
 import time
 from logging import Logger
 
@@ -43,6 +44,9 @@ class Dtsu666Service:
         self._task: asyncio.Task | None = None
         self._running = asyncio.Event()
         self._last_full_read = 0.0
+
+        self._powers_atomic = [0.0, 0.0, 0.0, 0.0]
+        self._powers_lock = threading.Lock()
 
         self._cache_lock = asyncio.Lock()
         self._cache = {
@@ -135,9 +139,13 @@ class Dtsu666Service:
 
     async def _update_cache(self, key, data):
         async with self._cache_lock:
-            _logger.debug(f"Updating cache: {key}, {data}")
             self._cache[key] = data
             self._cache["timestamp"] = time.time()
+
+        if key == "powers":
+            _logger.debug(f"Updating cache: {key}, {data}")
+            with self._powers_lock:
+                self._powers_atomic = list(data)
 
     async def get_cache(self):
         async with self._cache_lock:
