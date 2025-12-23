@@ -131,7 +131,7 @@ systemctl restart modbus-bridge
 systemctl stop modbus-bridge
 
 # Zugriffsrechte von modbus user auf dongle
-sudo -u modbus cat /dev/ttyUSB0
+su -u modbus cat /dev/ttyUSB0
 
 
 ```

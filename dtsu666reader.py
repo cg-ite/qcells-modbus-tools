@@ -170,26 +170,33 @@ async def main():
     # load defaults from config.json
     config = load_config()
 
-    reader = Dtsu666Reader(
-        cfg=config["dtsu"]
-    )
-
-    await reader.connect()
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--debug", type=bool, default=False,
-                        action=argparse.BooleanOptionalAction,
-                        help="sets logging level to debug, for debugging from cmd", )
-    parser.add_argument("-p", "--power", type=bool, default=False,
-                        action=argparse.BooleanOptionalAction,
-                        help="reads total active power block: total, phase a/b/c", )
-    parser.add_argument("-s", "--stats", type=bool, default=False,
-                        action=argparse.BooleanOptionalAction,
-                        help="reads whole stats blocks", )
+    parser.add_argument(
+        "-d", "--debug",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="sets logging level to debug, for debugging from cmd",)
+    parser.add_argument(
+        "-p", "--power",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="reads total active power block",)
+
+    parser.add_argument(
+        "-s", "--stats",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="reads whole stats blocks",)
     args = parser.parse_args()
 
     if args.debug:
         logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
                             level=config["logging"]["level"], )
+
+    reader = Dtsu666Reader(
+        cfg=config["dtsu"]
+    )
+    await reader.connect()
     values = None
     if args.power:
         values = await reader.read_actpowers_block()
