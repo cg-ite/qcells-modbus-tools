@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import logging
 import socket
@@ -144,6 +145,13 @@ async def main():
     config = load_config()
     logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
                         level=config["logging"]["level"], )
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-d", "--debug", default=False,
+        action=argparse.BooleanOptionalAction,
+        help="sets logging level to debug, for debugging from cmd", )
+
 
     dtsu = Dtsu666Service(config)
     shelly = Shelly(cfg=config, powermeter=dtsu)
