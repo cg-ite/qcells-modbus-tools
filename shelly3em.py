@@ -151,7 +151,11 @@ async def main():
         "-d", "--debug", default=False,
         action=argparse.BooleanOptionalAction,
         help="sets logging level to debug, for debugging from cmd", )
-
+    args = parser.parse_args()
+    if args.debug:
+        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                           level=logging.DEBUG, )
+        config["logging"]["level"] = logging.DEBUG
 
     dtsu = Dtsu666Service(config)
     shelly = Shelly(cfg=config, powermeter=dtsu)
