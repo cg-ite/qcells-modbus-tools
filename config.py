@@ -13,7 +13,7 @@ def load_config():
         return {
     "dtsu": {
         "device_id": 1,
-        "port": "/dev/ttyS0",
+        "port": "/dev/ttyUSB0",
         "baudrate": 9600,
         "parity": "N",
         "stopbits": 1,
@@ -24,9 +24,13 @@ def load_config():
         "port": 1883,
         "username": "user",
         "password": "pass",
-        "topic_prefix": "dtsu666"
+        "topic_prefix": "DTSU666"
     },
     "poll_interval": 30,
+    "shelly": {
+        "device_id": 1,
+        "udp_port": 2220
+    },
     "device": {
         "id": 1
     },
@@ -42,7 +46,7 @@ def load_config():
         "device_ids": [1],
         "tcp-ip": "192.168.1.24",
         "tcp-port": 502,
-        "rtu-port": "/dev/ttyUSB0",
+        "rtu-port": "/dev/ttyS0",
         "rtu-baudrate": 9600,
         "rtu-bytesize": 8,
         "rtu-parity": "N",
