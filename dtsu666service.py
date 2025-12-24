@@ -28,15 +28,13 @@ class Dtsu666Service:
     def __init__(
             self,
             cfg,
-            interval_ms=1000,
-            full_interval_s=15,
             mqtt_client=None,
             mqtt_topic="DTSU666",
     ):
         self.reader = None # Dtsu666Reader(cfg['dtsu']) -> falscher thread/event loop bei Aufruf von shelly
         self.dtsu_conf = cfg['dtsu']
-        self.interval = interval_ms / 1000.0
-        self.full_interval = full_interval_s
+        self.interval = cfg['dtsu-service']['dtsu-interval-ms'] / 1000.0
+        self.full_interval = cfg['dtsu-service']['full-interval-s']
 
         self.mqtt_client = mqtt_client
         self.mqtt_prefix = mqtt_topic

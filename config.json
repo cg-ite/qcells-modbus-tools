@@ -22,12 +22,9 @@
     "device": {
         "id": 1
     },
-    "emulator": {
-        "enabled": true,
-        "port": "/dev/ttyUSB0",
-        "baudrate": 9600,
-        "parity": "N",
-        "stopbits": 1
+    "dtsu-service": {
+        "dtsu-interval-ms": 250,
+        "full-interval-s": 15
     },
     "modbus-bridge": {
         "log-level": 10,
