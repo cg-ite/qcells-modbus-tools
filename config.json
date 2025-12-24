@@ -16,7 +16,7 @@
     },
     "poll_interval": 30,
     "shelly": {
-        "device_id": 1,
+        "device_id": "shellypro3em-ec4609c439c1",
         "udp_port": 2220
     },
     "device": {
