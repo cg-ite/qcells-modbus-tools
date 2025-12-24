@@ -1,7 +1,7 @@
 {
     "dtsu": {
         "device_id": 1,
-        "port": "/dev/ttyUSB0",
+        "port": "/dev/ttyS0",
         "baudrate": 9600,
         "parity": "N",
         "stopbits": 1,
@@ -34,7 +34,7 @@
         "device_ids": [1],
         "tcp-ip": "192.168.1.24",
         "tcp-port": 502,
-        "rtu-port": "/dev/ttyS0",
+        "rtu-port": "/dev/ttyUSB0",
         "rtu-baudrate": 9600,
         "rtu-bytesize": 8,
         "rtu-parity": "N",
