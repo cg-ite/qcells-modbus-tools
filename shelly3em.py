@@ -70,9 +70,9 @@ class Shelly:
                 "a_pf": 1.00,
                 "b_pf": 1.00,
                 "c_pf": 1.00,
-                "a_current": 4.029,
-                "b_current": 3.029,
-                "c_current": 2.029,
+                "a_current": _calculate_derived_values(a/230),
+                "b_current": _calculate_derived_values(b/230),
+                "c_current": _calculate_derived_values(c/230),
             },
         }
 
