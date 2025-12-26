@@ -16,7 +16,7 @@
     },
     "poll_interval": 30,
     "shelly": {
-        "log-level": 10,
+        "log-level": 30,
         "device_id": "shellyproem50-ec4609c439c1",
         "udp_port": 2223
     },
@@ -24,12 +24,12 @@
         "id": 1
     },
     "dtsu-service": {
-        "log-level": 10,
+        "log-level": 20,
         "dtsu-interval-ms": 250,
         "full-interval-s": 15
     },
     "modbus-bridge": {
-        "log-level": 10,
+        "log-level": 20,
         "device_ids": [1],
         "tcp-ip": "192.168.1.24",
         "tcp-port": 502,
