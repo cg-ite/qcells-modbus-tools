@@ -70,6 +70,9 @@ class Shelly:
                 "a_pf": 1.00,
                 "b_pf": 1.00,
                 "c_pf": 1.00,
+                "a_current": 4.029,
+                "b_current": 3.029,
+                "c_current": 2.029,
             },
         }
 
