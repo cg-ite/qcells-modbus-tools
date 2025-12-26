@@ -31,7 +31,7 @@ mkdir -p /etc/modbus-bridge
 mkdir -p /var/log/modbus-bridge
 chown -R modbus:modbus /etc/modbus-bridge /var/log/modbus-bridge
 
-nano /etc/passwd -> groupid userid modbus
+nano /etc/passwd -> note groupid userid modbus
 
 ```
 Dann in Proxmox gui unter resources device hinzufügen mit dem Userid und groupid

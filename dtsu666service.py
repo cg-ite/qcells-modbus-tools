@@ -158,7 +158,7 @@ class Dtsu666Service:
 async def main():
     config = load_config()
     logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                       level=config["logging"]["level"], )
+                       level=config["dtsu-service"]["log-level"], )
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -171,8 +171,7 @@ async def main():
                         help="enables mqtt client for publishing the data to a mqtt server",)
     args = parser.parse_args()
     if args.debug:
-        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                           level=logging.DEBUG, )
+        logging.getLogger("dtsu666service").setLevel(logging.DEBUG)
 
     mqtt_cfg = config.get("mqtt")
     mqtt_client = None

@@ -190,8 +190,7 @@ async def main():
     args = parser.parse_args()
 
     if args.debug:
-        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                            level=config["logging"]["level"], )
+        logging.getLogger("dtsu666reader").setLevel(logging.DEBUG)
 
     reader = Dtsu666Reader(
         cfg=config["dtsu"]

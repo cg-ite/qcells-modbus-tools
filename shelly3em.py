@@ -5,13 +5,13 @@ import socket
 import threading
 import json
 from concurrent.futures import ThreadPoolExecutor
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 from config import load_config
 from dtsu666service import Dtsu666Service
 
-logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s", level=logging.INFO)
-logger = logging.getLogger("shelly")
-
+_logger = logging.getLogger("shelly")
 
 def _calculate_derived_values(power):
     decimal_point_enforcer = 0.001
@@ -45,6 +45,42 @@ class Shelly:
         self._value_mutex = threading.Lock()
         self._executor = ThreadPoolExecutor(max_workers=5)
         self._send_lock = threading.Lock()
+        self.setup_logging(cfg["shelly"]["log-level"])
+
+    def setup_logging(self, log_level):
+        root = logging.getLogger()
+        root.setLevel(logging.DEBUG)
+
+        if root.handlers:
+            return  # verhindert doppelte Handler
+
+        fmt = logging.Formatter(
+            "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+        )
+
+        # === Journal / stdout ===
+        console = logging.StreamHandler()
+        console.setLevel(log_level)
+        console.setFormatter(fmt)
+        root.addHandler(console)
+
+        # === Debug-Log-Datei ===
+        log_dir = Path("/var/log/dtsu-service")
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        debug_file = RotatingFileHandler(
+            log_dir / "debug.log",
+            maxBytes=5 * 1024 * 1024,  # 5 MB
+            backupCount=5,
+        )
+        debug_file.setLevel(logging.DEBUG)
+        debug_file.setFormatter(fmt)
+        root.addHandler(debug_file)
+
+        logging.getLogger("pymodbus").setLevel(logging.WARNING)
+        if log_level == logging.DEBUG:
+            logging.getLogger("pymodbus.transport").setLevel(logging.DEBUG)
+            logging.getLogger("pymodbus.framer").setLevel(logging.DEBUG)
 
     def _create_em_response(self, request_id, powers):
         if powers is None:
@@ -93,12 +129,12 @@ class Shelly:
 
     def _handle_request(self, sock, data, addr):
         request_str = data.decode()
-        logger.debug(f"Received UDP message: {request_str}")
-        logger.debug(f"From: {addr[0]}:{addr[1]}")
+        _logger.debug(f"Received UDP message: {request_str}")
+        _logger.debug(f"From: {addr[0]}:{addr[1]}")
 
         try:
             request = json.loads(request_str)
-            logger.debug(f"Parsed request: {json.dumps(request, indent=2)}")
+            _logger.debug(f"Parsed request: {json.dumps(request, indent=2)}")
             if isinstance(request.get("params", {}).get("id"), int):
                 powers = self._powermeter.get_cache_powers()
 
@@ -110,19 +146,19 @@ class Shelly:
                     return
 
                 response_json = json.dumps(response, separators=(",", ":"))
-                logger.debug(f"Sending response: {response_json}")
+                _logger.debug(f"Sending response: {response_json}")
                 response_data = response_json.encode()
                 with self._send_lock:
                     sock.sendto(response_data, addr)
         except json.JSONDecodeError:
-            logger.error("Error: Invalid JSON")
+            _logger.error("Error: Invalid JSON")
         except Exception as e:
-            logger.error(f"Error processing message: {e}")
+            _logger.error(f"Error processing message: {e}")
 
     def udp_server(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.bind(("", self._udp_port))
-        logger.info(f"Shelly emulator listening on UDP port {self._udp_port}...")
+        _logger.info(f"Shelly emulator listening on UDP port {self._udp_port}...")
 
         try:
             while not self._stop:
@@ -178,7 +214,7 @@ async def main():
         await dtsu.stop()
         shelly.join()
         shelly.stop()
-        logger.info("Emulator stopped.")
+        _logger.info("Emulator stopped.")
 
 if __name__ == "__main__":
     asyncio.run(main())

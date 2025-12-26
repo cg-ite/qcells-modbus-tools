@@ -16,6 +16,7 @@
     },
     "poll_interval": 30,
     "shelly": {
+        "log-level": 10,
         "device_id": "shellyproem50-ec4609c439c1",
         "udp_port": 2223
     },
@@ -23,6 +24,7 @@
         "id": 1
     },
     "dtsu-service": {
+        "log-level": 10,
         "dtsu-interval-ms": 250,
         "full-interval-s": 15
     },
