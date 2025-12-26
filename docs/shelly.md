@@ -85,7 +85,7 @@ su -s /bin/bash modbus -c "cd /opt/qcells-modbus-tools && /var/lib/modbus/.local
 
 ```
 
-Create the file `sudo micro /etc/systemd/system/qmt-dtsu-service.service` with contents:
+4. Create the file `sudo micro /etc/systemd/system/qmt-dtsu-service.service` with contents:
 ```
 # /etc/systemd/system/qmt-dtsu-service.service
 [Unit]
@@ -110,7 +110,9 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-
+```
+5. Activate service
+```
 # cmd
 systemctl daemon-reload
 systemctl enable qmt-dtsu-service
