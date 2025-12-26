@@ -81,7 +81,7 @@ uv run dtsu666service.py -d
 
 ```
 # test connection and rights
-su -s /bin/bash modbus -c "cd /opt/qcells-modbus-tools && /var/lib/modbus/.local/bin/uv run modbus_bridge.py -d"
+su -s /bin/bash modbus -c "cd /opt/qcells-modbus-tools && /var/lib/modbus/.local/bin/uv run shelly.py -d"
 
 ```
 
@@ -98,7 +98,7 @@ Type=simple
 User=modbus
 Group=modbus
 WorkingDirectory=/opt/qcells-modbus-tools
-ExecStart=/var/lib/modbus/.local/bin/uv run dtsu666service.py
+ExecStart=/var/lib/modbus/.local/bin/uv run shelly.py
 Restart=always
 RestartSec=5
 # Logging über Journalctl
