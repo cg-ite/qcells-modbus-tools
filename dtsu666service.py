@@ -74,7 +74,7 @@ class Dtsu666Service:
         root.addHandler(console)
 
         # === Debug-Log-Datei ===
-        log_dir = Path("/var/log/modbus-bridge")
+        log_dir = Path("/var/log/dtsu-service")
         log_dir.mkdir(parents=True, exist_ok=True)
 
         debug_file = RotatingFileHandler(
