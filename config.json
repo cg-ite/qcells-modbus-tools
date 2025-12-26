@@ -24,7 +24,7 @@
         "id": 1
     },
     "dtsu-service": {
-        "log-level": 20,
+        "log-level": 30,
         "dtsu-interval-ms": 250,
         "full-interval-s": 15
     },

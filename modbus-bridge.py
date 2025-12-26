@@ -86,7 +86,7 @@ class SerialForwarderTCPServer:
 
     def setup_logging(self, log_level):
         root = logging.getLogger()
-        root.setLevel(logging.DEBUG)
+        root.setLevel(log_level)
 
         if root.handlers:
             return  # verhindert doppelte Handler
@@ -97,7 +97,7 @@ class SerialForwarderTCPServer:
 
         # === Journal / stdout ===
         console = logging.StreamHandler()
-        console.setLevel(log_level)
+        console.setLevel(logging.WARNING)
         console.setFormatter(fmt)
         root.addHandler(console)
 

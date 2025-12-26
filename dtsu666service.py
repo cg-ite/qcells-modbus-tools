@@ -5,6 +5,8 @@ import logging
 import threading
 import time
 from logging import Logger
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 from config import load_config
 from dtsu666_constants import BLOCK_STATS, REGISTERS
@@ -52,6 +54,42 @@ class Dtsu666Service:
             "powers": [0,0,0,0],
             "full": None,
         }
+        self.setup_logging(cfg["dtsu-service"]["log-level"])
+
+    def setup_logging(self, log_level):
+        root = logging.getLogger()
+        root.setLevel(log_level)
+
+        if root.handlers:
+            return  # verhindert doppelte Handler
+
+        fmt = logging.Formatter(
+            "%(asctime)s %(levelname)s [%(name)s] %(message)s"
+        )
+
+        # === Journal / stdout ===
+        console = logging.StreamHandler()
+        console.setLevel(logging.WARNING)
+        console.setFormatter(fmt)
+        root.addHandler(console)
+
+        # === Debug-Log-Datei ===
+        log_dir = Path("/var/log/modbus-bridge")
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        debug_file = RotatingFileHandler(
+            log_dir / "debug.log",
+            maxBytes=5 * 1024 * 1024,  # 5 MB
+            backupCount=5,
+        )
+        debug_file.setLevel(logging.DEBUG)
+        debug_file.setFormatter(fmt)
+        root.addHandler(debug_file)
+
+        logging.getLogger("pymodbus").setLevel(logging.WARNING)
+        if log_level == logging.DEBUG:
+            logging.getLogger("pymodbus.transport").setLevel(logging.DEBUG)
+            logging.getLogger("pymodbus.framer").setLevel(logging.DEBUG)
 
     async def start(self):
         _logger.info("Starting DTSU666 service")

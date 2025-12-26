@@ -49,7 +49,7 @@ class Shelly:
 
     def setup_logging(self, log_level):
         root = logging.getLogger()
-        root.setLevel(logging.DEBUG)
+        root.setLevel(log_level)
 
         if root.handlers:
             return  # verhindert doppelte Handler
@@ -60,16 +60,16 @@ class Shelly:
 
         # === Journal / stdout ===
         console = logging.StreamHandler()
-        console.setLevel(log_level)
+        console.setLevel(logging.WARNING)
         console.setFormatter(fmt)
         root.addHandler(console)
 
         # === Debug-Log-Datei ===
-        log_dir = Path("/var/log/dtsu-service")
+        log_dir = Path("/var/log/modbus-bridge")
         log_dir.mkdir(parents=True, exist_ok=True)
 
         debug_file = RotatingFileHandler(
-            log_dir / "debug.log",
+            log_dir / "shelly-debug.log",
             maxBytes=5 * 1024 * 1024,  # 5 MB
             backupCount=5,
         )
@@ -81,6 +81,7 @@ class Shelly:
         if log_level == logging.DEBUG:
             logging.getLogger("pymodbus.transport").setLevel(logging.DEBUG)
             logging.getLogger("pymodbus.framer").setLevel(logging.DEBUG)
+
 
     def _create_em_response(self, request_id, powers):
         if powers is None:
