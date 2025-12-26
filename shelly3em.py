@@ -64,6 +64,12 @@ class Shelly:
                 "b_act_power": b,
                 "c_act_power": c,
                 "total_act_power": total_act_power,
+                "a_freq": 50.00,
+                "b_freq": 50.00,
+                "c_freq": 50.00,
+                "a_pf": 1.00,
+                "b_pf": 1.00,
+                "c_pf": 1.00,
             },
         }
 
