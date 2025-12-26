@@ -11,7 +11,7 @@ Folgende Tools benötige ich dazu:
 1. [Modbus Bridge from rtu to tcp](docs/modbus-bridge.md)
 2. [DTSU666 modbus reader](docs/dtsu666-reader.md)
 3. Mqtt bridge for the dtsu666
-4. Shelly 3em pro adapter for the Marstek Akku to get the energy data from the dtsu666
+4. [Shelly adapter](docs/shelly.md) for the Marstek battery to get the energy data from the dtsu666
 
 Alle Tools können auch mehr oder weniger einzeln benutzt werden.
 
