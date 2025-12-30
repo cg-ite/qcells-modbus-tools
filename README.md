@@ -18,6 +18,10 @@ Alle Tools können auch mehr oder weniger einzeln benutzt werden.
 Die config umfasst alle Tools, da ich alle benötige. Das logging level ist zentral
 und gilt für alle Tools gemeinsam.
 
+## Config
+Alle tools werden über eine Datei `config.json` konfiguriert. Diese
+kann mit `cp config.example.json config.json` aus der mitgelieferten
+Beispiel config erzeugt und angepasst werden.
 
 ## 3. Mqtt-Bridge
 
