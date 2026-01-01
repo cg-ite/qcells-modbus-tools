@@ -134,6 +134,7 @@ def generate_phase_sensors():
             "state_class": "measurement",
             "value_template": f"{{{{ value_json.{reg['name']} }}}}",
             "force_update": reg.get("force_update", False),
+            "unique_id": f"{reg['name'].lower()}",
         })
 
     return sensors
@@ -142,6 +143,7 @@ DTSU_SENSORS = [
     # ---- Diagnostic ----
     {
         "object_id": "modbus_diagnostic",
+        "unique_id": "modbus_diagnostic",
         "name": "Smart Meter DTSU666 Modbus Diagnose",
         "component": "sensor",
         "state_topic": "DTSU666/Modbus/Diagnostic",
@@ -153,6 +155,7 @@ DTSU_SENSORS = [
     {
         "component": "binary_sensor",
         "object_id": "modbus_connectivity",
+        "unique_id": "modbus_connectivity",
         "name": "Smart Meter DTSU666 Modbus Verbindung",
         "state_topic": "DTSU666/Modbus/Health",
         "payload_on": "ok",
@@ -164,6 +167,7 @@ DTSU_SENSORS = [
     # Non-phase Sensors (Frequency, Totals, Energy)
     {
         "object_id": "frequency",
+        "unique_id": "frequency",
         "name": "Smart Meter DTSU666 Frequency",
         "state_topic": "DTSU666/Frequency",
         "device_class": "frequency",
