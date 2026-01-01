@@ -129,7 +129,7 @@ def generate_phase_sensors():
             "object_id": f"{reg['name'].lower()}",
             "name": f"Smart Meter DTSU666 {reg['name'].replace('_', ' ')}",
             "state_topic": f"DTSU666/{reg['name']}",
-            "device_class": reg["device_class"],
+            "device_class": reg['device_class'],
             "unit": reg.get("unit"),
             "state_class": "measurement",
             "value_template": f"{{{{ value_json.{reg['name']} }}}}",

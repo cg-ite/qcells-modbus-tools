@@ -63,9 +63,9 @@ REGISTERS = {
     0x202E: {"name": "Power_Factor_Phase_B", "device_class": "power_factor", "words": 2, "factor": 0.001},
     0x2030: {"name": "Power_Factor_Phase_C", "device_class": "power_factor", "words": 2, "factor": 0.001},
 
-    0x2012: {"name": "Total_Active_Power",   "func": 3, "words": 2, "factor": 0.1},
-    0x201A: {"name": "Total_Reactive_Power", "func": 3, "words": 2, "factor": 0.1},
-    0x202A: {"name": "Total_Power_Factor",   "func": 3, "words": 2, "factor": 0.001},
+    0x2012: {"name": "Total_Active_Power",   "device_class": "power", "words": 2, "factor": 0.1},
+    0x201A: {"name": "Total_Reactive_Power", "device_class": "power", "words": 2, "factor": 0.1},
+    0x202A: {"name": "Total_Power_Factor",   "device_class": "power_factor", "words": 2, "factor": 0.001},
 
     0x2044: {"name": "Frequency", "device_class": "frequency", "unit": "Hz", "words": 2, "factor": 0.01},
 
