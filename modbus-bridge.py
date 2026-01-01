@@ -170,7 +170,7 @@ class ThrottledSerialClient:
                 if address <= 0x040F < address + count:
                     idx = 0x040F - address
                     self.runmode = result.registers[idx]
-                    _logger.info(f"Runmode:{self.runmode}")
+                    _logger.debug(f"Runmode:{self.runmode}")
 
                 return result
             except Exception as e:
@@ -216,10 +216,10 @@ class Runmode(Enum):
 
 async def main():
     config = load_config()
-    logging.basicConfig(
-        level=config["modbus-bridge"]["log-level"],
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+    # logging.basicConfig(
+    #     level=config["modbus-bridge"]["log-level"],
+    #     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    # )
     server = SerialForwarderTCPServer(cfg=config["modbus-bridge"])
 
     # -----------------------------
