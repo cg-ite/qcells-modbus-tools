@@ -10,7 +10,7 @@ Die Konfiguration erfolgt über eine json Datei:
     "log-level": 10,
     "device_ids": [1],
     "tcp-ip": "127.0.0.1",
-    "tcp-port": 502,
+    "tcp-port": 1502,
     "rtu-port": "/dev/ttyUSB0",
     "rtu-baudrate": 9600,
     "rtu-bytesize": 8,
@@ -19,6 +19,20 @@ Die Konfiguration erfolgt über eine json Datei:
     }
 }
 ```
+- `log_level` - Der Service loggt mit level Warning ins journal und mit
+`log_level`  in die Datei `/var/log/modbus-bridge/debug.log`, um bei Bedarf
+mehr Fehler, Warnungen und Infos zu bekommen.
+- `device_ids` - Modbus Id des WR. Theoretisch können mehrere Ids angegeben werden,
+da ich den originalen Code an dieser Stelle nicht angepasst habe.
+- `tcp-ip` - Die Ip-Adresse des Servers auf der der ModbusTCP-Server horchen soll.
+- `tcp-port` - Der Port auf der der ModbusTCP-Server horchen soll. Da Port unter 1024
+unter Linux `root` Rechte benötigen, habe ich ihn auf 1502 gesetzt. Es gibt wie immer
+auch andere Möglichkeiten: https://serverfault.com/questions/268099/bind-to-ports-less-than-1024-without-root-access
+Unter HA kann man den Port auch einstellen und es funktioniert ohne Probleme.
+- `rtu-port` - Der Port auf dem euer ModbusRTU-Dongle für den WR hängt
+
+Der Rest ist eigentlich selbsterklärend.
+
 ### systemd config
 Create user and group for service
 ```
