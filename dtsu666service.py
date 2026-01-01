@@ -11,19 +11,9 @@ from pathlib import Path
 from config import load_config
 from dtsu666_constants import BLOCK_STATS, REGISTERS
 from dtsu666reader import Dtsu666Reader
+from homeassistant.dtsu666mqttha import DTSU666MqttHa
 
 _logger = logging.getLogger("dtsu666service")
-
-from aiomqtt import Client as MQTTClient
-
-def create_mqtt_client(cfg):
-    return MQTTClient(
-        hostname=cfg["host"],
-        port=cfg.get("port", 1883),
-        username=cfg["username"],
-        password=cfg["password"],
-        keepalive=60,
-    )
 
 class Dtsu666Service:
 
@@ -31,7 +21,6 @@ class Dtsu666Service:
             self,
             cfg,
             mqtt_client=None,
-            mqtt_topic="DTSU666",
     ):
         self.reader = None # Dtsu666Reader(cfg['dtsu']) -> falscher thread/event loop bei Aufruf von shelly
         self.dtsu_conf = cfg['dtsu']
@@ -39,7 +28,6 @@ class Dtsu666Service:
         self.full_interval = cfg['dtsu-service']['full-interval-s']
 
         self.mqtt_client = mqtt_client
-        self.mqtt_prefix = mqtt_topic
 
         self._task: asyncio.Task | None = None
         self._running = asyncio.Event()
@@ -148,9 +136,7 @@ class Dtsu666Service:
     async def _publish(self, topic, payload):
         await self.mqtt_client.publish(
             topic,
-            json.dumps(payload),
-            qos=1,
-            retain=True,
+            json.dumps(payload)
         )
 
     async def _publish_full_read_mqtt(self, data):
@@ -216,13 +202,13 @@ async def main():
 
     if args.mqtt:
         if mqtt_cfg:
-            mqtt_client = create_mqtt_client(mqtt_cfg)
-            await mqtt_client.__aenter__()  # aiomqtt Client starten
+            mqtt_client = DTSU666MqttHa(mqtt_cfg)
+            await mqtt_client.connect()
+            mqtt_client.publish_discovery()
 
     service = Dtsu666Service(
         config,
         mqtt_client=mqtt_client,
-        mqtt_topic= config["mqtt"]["topic_prefix"],
     )
 
     await service.start()
@@ -235,8 +221,7 @@ async def main():
     finally:
         await service.stop()
         if mqtt_client:
-            await mqtt_client.__aexit__(None, None, None)
-
+            await mqtt_client.disconnect()
 
 if __name__ == "__main__":
     asyncio.run(main())

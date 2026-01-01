@@ -4,11 +4,11 @@
   # - added more/all topics of my dtsu666
 sensor:
   ...
-  - name: 'DTSU666 Converter Modbus Errors 0xE0'
-    unique_id: dtsu666_converter_modbus_errors_0xe0
-    state_topic: 'DTSU666/Modbus/Diagnostic'
-    icon: 'mdi:counter'
-    value_template: '{{ value_json.DTSU666 }}'
+  - name: "Smart Meter DTSU666 Modbus Diagnose"
+    unique_id: dtsu666_modbus_error
+    state_topic: "DTSU666/Modbus/Diagnostic"
+    value_template: "{{ value_json.error }}"
+    entity_category: diagnostic
 
   # Smart Meter DTSUU666
   - name: 'Smart Meter DTSU666 Voltage Phase A'
