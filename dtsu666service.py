@@ -46,7 +46,6 @@ class Dtsu666Service:
 
     def setup_logging(self, log_level):
         root = logging.getLogger()
-        root.setLevel(log_level)
 
         if root.handlers:
             return  # verhindert doppelte Handler
@@ -70,7 +69,7 @@ class Dtsu666Service:
             maxBytes=5 * 1024 * 1024,  # 5 MB
             backupCount=5,
         )
-        debug_file.setLevel(logging.DEBUG)
+        debug_file.setLevel(log_level)
         debug_file.setFormatter(fmt)
         root.addHandler(debug_file)
 
