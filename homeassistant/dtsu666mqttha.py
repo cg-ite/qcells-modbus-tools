@@ -35,7 +35,7 @@ class DTSU666MqttHa:
         await self.client.__aexit__(None, None, None)
 
     # ---------- Discovery ----------
-    def publish_discovery(self):
+    async def publish_discovery(self):
         for s in DTSU_SENSORS:
             component = s.get("component", "sensor")
             object_id = s["object_id"]
@@ -69,7 +69,7 @@ class DTSU666MqttHa:
             if "entity_category" in s:
                 payload["entity_category"] = s["entity_category"]
 
-            self.client.publish(topic, json.dumps(payload), retain=True)
+            await self.client.publish(topic, json.dumps(payload), retain=True)
 
     # ---------- Availability ----------
     def set_availability(self, online: bool):

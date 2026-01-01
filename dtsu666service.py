@@ -203,7 +203,7 @@ async def main():
         if mqtt_cfg:
             mqtt_client = DTSU666MqttHa(mqtt_cfg)
             await mqtt_client.connect()
-            mqtt_client.publish_discovery()
+            await mqtt_client.publish_discovery()
 
     service = Dtsu666Service(
         config,
