@@ -124,7 +124,7 @@ def generate_phase_sensors():
     """ generates the sensor json for auto discovery """
     sensors = []
 
-    for reg in REGISTERS:
+    for key, reg in REGISTERS.items():
         sensors.append({
             "object_id": f"{reg['name'].lower()}",
             "name": f"Smart Meter DTSU666 {reg['name'].replace('_', ' ')}",
