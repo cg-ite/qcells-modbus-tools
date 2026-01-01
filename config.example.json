@@ -11,8 +11,7 @@
         "host": "localhost",
         "port": 1883,
         "username": "user",
-        "password": "pass",
-        "topic_prefix": "DTSU666"
+        "password": "pass"
     },
     "poll_interval": 30,
     "shelly": {
