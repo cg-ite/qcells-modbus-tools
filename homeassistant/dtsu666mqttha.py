@@ -20,13 +20,7 @@ class DTSU666MqttHa:
         self.discovery_prefix = "homeassistant"
         self.availability_topic = "DTSU666/availability"
 
-        self.device = {
-            "identifiers": ["dtsu666_modbus"],
-            "name": "Smart Meter DTSU666",
-            "manufacturer": "Huawei",
-            "model": "DTSU666",
-            "sw_version": "1.0",
-        }
+        self.device = dtsu666_device()
 
     async def connect(self):
         await self.client.__aenter__()
@@ -45,31 +39,7 @@ class DTSU666MqttHa:
                 f"{component}/dtsu666/{object_id}/config"
             )
 
-            payload = {
-                "name": s["name"],
-                "unique_id": f"dtsu666_{object_id}",
-                "state_topic": s["state_topic"],
-                "availability_topic": self.availability_topic,
-                "payload_available": "online",
-                "payload_not_available": "offline",
-                "device": self.device,
-            }
-            if component == "binary_sensor":
-                payload["payload_on"] = s["payload_on"]
-                payload["payload_off"] = s["payload_off"]
-
-            if "device_class" in s:
-                payload["device_class"] = s["device_class"]
-            if "unit" in s:
-                payload["unit_of_measurement"] = s["unit"]
-            if "state_class" in s:
-                payload["state_class"] = s["state_class"]
-            if "value_template" in s:
-                payload["value_template"] = s["value_template"]
-            if "entity_category" in s:
-                payload["entity_category"] = s["entity_category"]
-
-            await self.client.publish(topic, json.dumps(payload), retain=True)
+            await self.client.publish(topic, json.dumps(s), retain=True)
 
     # ---------- Availability ----------
     def set_availability(self, online: bool):
@@ -128,36 +98,46 @@ def generate_phase_sensors():
         sensors.append({
             "object_id": f"{reg['name'].lower()}",
             "name": f"Smart Meter DTSU666 {reg['name'].replace('_', ' ')}",
-            "state_topic": f"DTSU666/{reg['name']}",
+            "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
             "unit": reg.get("unit"),
             "state_class": "measurement",
             "value_template": f"{{{{ value_json.{reg['name']} }}}}",
             "force_update": reg.get("force_update", False),
-            "unique_id": f"{reg['name'].lower()}",
+            "unique_id": f"{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
         })
 
     return sensors
+
+def dtsu666_device():
+    return {
+        "identifiers": ["dtsu666"],
+        "manufacturer": "Huawei",
+        "model": "DTSU666",
+        "sw_version": "1.0",
+        "name": "Smart Meter DTSU666",
+    }
 
 DTSU_SENSORS = [
     # ---- Diagnostic ----
     {
         "object_id": "modbus_diagnostic",
-        "unique_id": "modbus_diagnostic",
+        "unique_id": f"{dtsu666_device()['identifiers'][0]}_modbus_diagnostic",
         "name": "Smart Meter DTSU666 Modbus Diagnose",
         "component": "sensor",
-        "state_topic": "DTSU666/Modbus/Diagnostic",
+        "state_topic": f"{dtsu666_device()['model']}/Modbus/Diagnostic",
         "value_template": "{{ value_json.error }}",
         "entity_category": "diagnostic",
+        "device": dtsu666_device()
     },
 
     # ---- Connectivity ----
     {
         "component": "binary_sensor",
         "object_id": "modbus_connectivity",
-        "unique_id": "modbus_connectivity",
+        "unique_id": f"{dtsu666_device()['identifiers'][0]}_modbus_connectivity",
         "name": "Smart Meter DTSU666 Modbus Verbindung",
-        "state_topic": "DTSU666/Modbus/Health",
+        "state_topic": f"{dtsu666_device()['model']}/Modbus/Health",
         "payload_on": "ok",
         "payload_off": "error",
         "device_class": "connectivity",
@@ -167,9 +147,9 @@ DTSU_SENSORS = [
     # Non-phase Sensors (Frequency, Totals, Energy)
     {
         "object_id": "frequency",
-        "unique_id": "frequency",
+        "unique_id": f"{dtsu666_device()['identifiers'][0]}_frequency",
         "name": "Smart Meter DTSU666 Frequency",
-        "state_topic": "DTSU666/Frequency",
+        "state_topic": f"{dtsu666_device()['model']}/Frequency",
         "device_class": "frequency",
         "unit": "Hz",
         "state_class": "measurement",
