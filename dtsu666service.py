@@ -199,18 +199,20 @@ async def main():
     mqtt_cfg = config.get("mqtt")
     mqtt_client = None
 
+    service = Dtsu666Service(
+        config,
+        mqtt_client=mqtt_client,
+    )
+
+    # only start mqtt
     if args.mqtt:
         if mqtt_cfg:
             mqtt_client = DTSU666MqttHa(mqtt_cfg)
             await mqtt_client.connect()
             await mqtt_client.publish_discovery()
 
-    service = Dtsu666Service(
-        config,
-        mqtt_client=mqtt_client,
-    )
-
-    await service.start()
+    else:
+        await service.start()
 
     try:
         # läuft "für immer"
@@ -218,9 +220,12 @@ async def main():
     except KeyboardInterrupt:
         pass
     finally:
-        await service.stop()
-        if mqtt_client:
-            await mqtt_client.disconnect()
+        if args.mqtt:
+            if mqtt_client:
+                await mqtt_client.disconnect()
+        else:
+            await service.stop()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
