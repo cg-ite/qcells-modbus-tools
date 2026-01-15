@@ -36,7 +36,9 @@ class DTSU666MqttHa:
                 f"{self.discovery_prefix}/"
                 f"{component}/dtsu666/{s["topic"]}/config"
             )
+            s["available"] = False
             await self.client.publish(topic, json.dumps(s), retain=True)
+            #await self.client.publish(topic, json.dumps(s), retain=True)
 
     # ---------- Availability ----------
     def set_availability(self, online: bool):
