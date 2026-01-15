@@ -97,7 +97,7 @@ def generate_phase_sensors():
     for key, reg in REGISTERS.items():
         sensors.append({
             "object_id": f"{reg['name'].lower()}",
-            "name": f"Smart Meter DTSU666 {reg['name'].replace('_', ' ')}",
+            "name": f"{reg['name'].replace('_', ' ').title()}",
             "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
             "unit": reg.get("unit"),
@@ -105,6 +105,8 @@ def generate_phase_sensors():
             "value_template": f"{{{{ value_json.{reg['name']} }}}}",
             "force_update": reg.get("force_update", False),
             "unique_id": f"{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
+            "device": dtsu666_device(),
+            "has_entity_name": True,
         })
 
     return sensors
@@ -123,12 +125,13 @@ DTSU_SENSORS = [
     {
         "object_id": "modbus_diagnostic",
         "unique_id": f"{dtsu666_device()['identifiers'][0]}_modbus_diagnostic",
-        "name": "Smart Meter DTSU666 Modbus Diagnose",
+        "name": "Modbus Diagnose",
         "component": "sensor",
         "state_topic": f"{dtsu666_device()['model']}/Modbus/Diagnostic",
         "value_template": "{{ value_json.error }}",
         "entity_category": "diagnostic",
-        "device": dtsu666_device()
+        "device": dtsu666_device(),
+        "has_entity_name": True,
     },
 
     # ---- Connectivity ----
@@ -136,11 +139,13 @@ DTSU_SENSORS = [
         "component": "binary_sensor",
         "object_id": "modbus_connectivity",
         "unique_id": f"{dtsu666_device()['identifiers'][0]}_modbus_connectivity",
-        "name": "Smart Meter DTSU666 Modbus Verbindung",
+        "name": "Modbus Verbindung",
         "state_topic": f"{dtsu666_device()['model']}/Modbus/Health",
         "payload_on": "ok",
         "payload_off": "error",
         "device_class": "connectivity",
+        "device": dtsu666_device(),
+        "has_entity_name": True,
     },
     *generate_phase_sensors(),
 
@@ -148,14 +153,15 @@ DTSU_SENSORS = [
     {
         "object_id": "frequency",
         "unique_id": f"{dtsu666_device()['identifiers'][0]}_frequency",
-        "name": "Smart Meter DTSU666 Frequency",
+        "name": "Frequency",
         "state_topic": f"{dtsu666_device()['model']}/Frequency",
         "device_class": "frequency",
         "unit": "Hz",
         "state_class": "measurement",
         "value_template": "{{ value_json.Frequency }}",
+        "device": dtsu666_device(),
+        "has_entity_name": True,
     },
-
 ]
 
 MODBUS_EXCEPTIONS = {
