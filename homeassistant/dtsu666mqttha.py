@@ -32,13 +32,10 @@ class DTSU666MqttHa:
     async def publish_discovery(self):
         for s in DTSU_SENSORS:
             component = s.get("component", "sensor")
-            object_id = s["object_id"]
-
             topic = (
                 f"{self.discovery_prefix}/"
-                f"{component}/dtsu666/{object_id}/config"
+                f"{component}/dtsu666/{s["topic"]}/config"
             )
-            del s["object_id"]
             await self.client.publish(topic, json.dumps(s), retain=True)
 
     # ---------- Availability ----------
@@ -96,8 +93,9 @@ def generate_phase_sensors():
 
     for key, reg in REGISTERS.items():
         sensors.append({
-            "object_id": f"{reg['name'].lower()}",
+            "topic": f"{reg['name'].lower()}",
             "unique_id": f"{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
+            "entity_id": f"sensor.{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
             "name": f"{reg['name'].replace('_', ' ').title()}",
             "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
@@ -123,7 +121,7 @@ def dtsu666_device():
 DTSU_SENSORS = [
     # ---- Diagnostic ----
     {
-        "object_id": "modbus_diagnostic",
+        "topic": "modbus_diagnostic",
         "unique_id": f"{dtsu666_device()['identifiers'][0]}_modbus_diagnostic",
         "name": "Modbus Diagnose",
         "component": "sensor",
@@ -137,7 +135,7 @@ DTSU_SENSORS = [
     # ---- Connectivity ----
     {
         "component": "binary_sensor",
-        "object_id": "modbus_connectivity",
+        "topic": "modbus_connectivity",
         "unique_id": f"{dtsu666_device()['identifiers'][0]}_modbus_connectivity",
         "name": "Modbus Verbindung",
         "state_topic": f"{dtsu666_device()['model']}/Modbus/Health",
@@ -151,7 +149,7 @@ DTSU_SENSORS = [
 
     # Non-phase Sensors (Frequency, Totals, Energy)
     {
-        "object_id": "frequency",
+        "topic": "frequency",
         "unique_id": f"{dtsu666_device()['identifiers'][0]}_frequency",
         "name": "Frequency",
         "state_topic": f"{dtsu666_device()['model']}/Frequency",
