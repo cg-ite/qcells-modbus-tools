@@ -96,7 +96,6 @@ def generate_phase_sensors():
 
     for key, reg in REGISTERS.items():
         sensors.append({
-            "object_id": f"{reg['name'].lower()}",
             "name": f"{reg['name'].replace('_', ' ').title()}",
             "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
