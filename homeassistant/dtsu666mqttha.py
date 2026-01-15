@@ -32,7 +32,7 @@ class DTSU666MqttHa:
     async def publish_discovery(self):
         for s in DTSU_SENSORS:
             component = s.get("component", "sensor")
-            object_id = s["object_id"]
+            object_id = s['name'].lower()
 
             topic = (
                 f"{self.discovery_prefix}/"
