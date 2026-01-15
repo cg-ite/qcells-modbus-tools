@@ -32,13 +32,13 @@ class DTSU666MqttHa:
     async def publish_discovery(self):
         for s in DTSU_SENSORS:
             component = s.get("component", "sensor")
-            object_id = s['name'].lower()
+            object_id = s["object_id"]
 
             topic = (
                 f"{self.discovery_prefix}/"
                 f"{component}/dtsu666/{object_id}/config"
             )
-
+            del s["object_id"]
             await self.client.publish(topic, json.dumps(s), retain=True)
 
     # ---------- Availability ----------
@@ -96,6 +96,8 @@ def generate_phase_sensors():
 
     for key, reg in REGISTERS.items():
         sensors.append({
+            "object_id": f"{reg['name'].lower()}",
+            "unique_id": f"{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
             "name": f"{reg['name'].replace('_', ' ').title()}",
             "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
@@ -103,7 +105,6 @@ def generate_phase_sensors():
             "state_class": "measurement",
             "value_template": f"{{{{ value_json.{reg['name']} }}}}",
             "force_update": reg.get("force_update", False),
-            "unique_id": f"{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
             "device": dtsu666_device(),
             "has_entity_name": True,
         })
