@@ -1,10 +1,8 @@
 import argparse
 import asyncio
-import json
 import logging
 import threading
 import time
-from logging import Logger
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -116,7 +114,7 @@ class Dtsu666Service:
                             self._last_full_read = now
 
                             # 🔹 MQTT async publish (fire & forget)
-                            #asyncio.create_task(self._publish_full_read_mqtt(data))
+                            asyncio.create_task(self._publish_full_read_mqtt(data))
 
                     else:
                         data = await self.reader.read_actpowers_block()
@@ -132,12 +130,6 @@ class Dtsu666Service:
         except asyncio.CancelledError:
             _logger.info("Polling loop cancelled")
 
-    async def _publish(self, topic, payload):
-        await self.mqtt_client.publish(
-            topic,
-            json.dumps(payload)
-        )
-
     async def _publish_full_read_mqtt(self, data):
         """publishes all data to mqtt"""
         if not self.mqtt_client:
@@ -148,15 +140,12 @@ class Dtsu666Service:
             addresses = [block['address'] + i * 2 for i in range(block['count']/2)]
 
             for i, adr in enumerate(addresses):
-                value = block['values'][i] * REGISTERS[adr]['factor']
+                value = data['values'][i] * REGISTERS[adr]['factor']
                 try:
-                    await self._publish(
-                        f"{self.mqtt_prefix}/{REGISTERS[adr]['name']}", {
-                        f"{REGISTERS[adr]['name']}": value
-                    })
+                    await self.mqtt_client.publish(adr, value)
 
                 except Exception as e:
-                    _logger.exception(f"Topic: {self.mqtt_prefix}/{REGISTERS[adr]['name']}, ex: {e}", e)
+                    _logger.exception(f"Register: {REGISTERS[adr]['name']}, ex: {e}", e)
 
     async def _update_cache(self, key, data):
         async with self._cache_lock:

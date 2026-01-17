@@ -3,7 +3,15 @@ from aiomqtt import Client as MQTTClient
 
 from dtsu666_constants import REGISTERS
 
+
 def create_mqtt_client(cfg):
+    """
+    Erstellt einen aiomqtt-Client.
+
+    :param cfg: Ein Wörterbuch mit Konfigurationseinstellungen für den MQTT-Client.
+                Erwartete Keys: 'host', 'username', 'password', 'port' (optional).
+    :return: Ein instanziierter MQTTClient, konfiguriert mit den angegebenen Einstellungen.
+    """
     return MQTTClient(
         hostname=cfg["host"],
         port=cfg.get("port", 1883),
@@ -12,20 +20,20 @@ def create_mqtt_client(cfg):
         keepalive=60,
     )
 
-class DTSU666MqttHa:
-    def __init__(self, cfg, client_id="dtsu666"):
 
+class DTSU666MqttHa:
+    def __init__(self, cfg):
         self.client = create_mqtt_client(cfg)
 
         self.discovery_prefix = "homeassistant"
-        self.availability_topic = "DTSU666/availability"
+        self.availability_topic = f"{self.get_mqtt_prefix()}/availability"
 
         self.device = dtsu666_device()
 
     async def connect(self):
         await self.client.__aenter__()
 
-    async  def disconnect(self):
+    async def disconnect(self):
         await self.client.__aexit__(None, None, None)
 
     # ---------- Discovery ----------
@@ -38,7 +46,6 @@ class DTSU666MqttHa:
             )
             s["available"] = False
             await self.client.publish(topic, json.dumps(s), retain=True)
-            #await self.client.publish(topic, json.dumps(s), retain=True)
 
     # ---------- Availability ----------
     def set_availability(self, online: bool):
@@ -48,23 +55,35 @@ class DTSU666MqttHa:
             retain=True,
         )
 
+    def get_mqtt_prefix(self):
+        return self.device['model']
+    def get_mqtt_topic(self, address):
+        return REGISTERS[address]['name']
+
     # ---------- Data ----------
-    async def publish(self, topic, payload):
+    async def publish(self, address, value):
         await self.client.publish(
-            topic,
-            json.dumps(payload),
+            f"{self.get_mqtt_prefix()}/{self.get_mqtt_topic(address)}",
+            json.dumps({
+                f"{self.get_mqtt_topic(address)}": value
+            }),
             qos=1,
             retain=True,
         )
 
     # ---------- Diagnostic ----------
-    def publish_diagnostic(self, code,  **extra):
+    def publish_diagnostic(self, code, **extra):
         payload = {
             "code": code,
             "error": MODBUS_EXCEPTIONS[code],
             **extra,
         }
-        self.publish("DTSU666/Modbus/Diagnostic", payload)
+        self.client.publish(
+            f"{self.get_mqtt_prefix()}/Modbus/Diagnostic",
+            json.dumps(payload),
+            qos=1,
+            retain=True, )
+
 
 class ModbusHealth:
     def __init__(self, ha):
@@ -89,6 +108,7 @@ class ModbusHealth:
                 retain=True,
             )
 
+
 def generate_phase_sensors():
     """ generates the sensor json for auto discovery """
     sensors = []
@@ -98,6 +118,7 @@ def generate_phase_sensors():
             "topic": f"{reg['name'].lower()}",
             "unique_id": f"{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
             "entity_id": f"sensor.{dtsu666_device()['identifiers'][0]}_{reg['name'].lower()}",
+            "component": "sensor",
             "name": f"{reg['name'].replace('_', ' ').title()}",
             "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
@@ -111,7 +132,16 @@ def generate_phase_sensors():
 
     return sensors
 
+
 def dtsu666_device():
+    """
+    Erzeugt ein Gerätedaten-Dictionary für den Smart Meter DTSU666.
+
+    :return: Ein Wörterbuch mit Informationen über das Gerät,
+             einschließlich Identifikatoren, Hersteller, Modell,
+             Softwareversion und Name.
+    :rtype: dict
+    """
     return {
         "identifiers": ["dtsu666"],
         "manufacturer": "Huawei",
@@ -119,6 +149,8 @@ def dtsu666_device():
         "sw_version": "1.0",
         "name": "Smart Meter DTSU666",
     }
+
+
 
 DTSU_SENSORS = [
     # ---- Diagnostic ----
