@@ -9,6 +9,7 @@ uv run modbus-bridge.py
 import asyncio
 import logging
 import signal
+import sys
 import threading
 import time
 from enum import Enum
@@ -215,7 +216,14 @@ class Runmode(Enum):
     PERMANENT_FAULT_MODE = 4
 
 async def main():
-    config = load_config()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c", "--config", default="config.json",
+        help="path to config.json", )
+    args = parser.parse_args()
+
+    config = load_config(args.config)
     # logging.basicConfig(
     #     level=config["modbus-bridge"]["log-level"],
     #     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
@@ -242,13 +250,18 @@ async def main():
     loop.add_signal_handler(signal.SIGTERM, shutdown_handler)
 
     # Warten, bis Stopp-Signal kommt
-    await stop_event.wait()
+    try:
+        await stop_event.wait()
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        pass
     # Server stoppen
     await server.stop()
 
     logging.info("Shutdown complete.")
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

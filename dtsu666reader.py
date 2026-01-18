@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import logging
 import signal
+import sys
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -167,10 +168,10 @@ class Dtsu666Reader:
 async def main():
     """Reads the consumption data of a dtsu666 once"""
 
-    # load defaults from config.json
-    config = load_config()
-
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c", "--config", default="config.json",
+        help="path to config.json", )
     parser.add_argument(
         "-d", "--debug",
         default=False,
@@ -188,6 +189,9 @@ async def main():
         action=argparse.BooleanOptionalAction,
         help="reads whole stats blocks",)
     args = parser.parse_args()
+
+    # load defaults from config.json
+    config = load_config(args.config)
 
     if args.debug:
         logging.getLogger("dtsu666reader").setLevel(logging.DEBUG)
@@ -216,6 +220,8 @@ class ModbusReading:
     error_code: Optional[int] = None
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     try:
         signal.signal(signal.SIGINT, raise_graceful_exit)
         asyncio.run(main())

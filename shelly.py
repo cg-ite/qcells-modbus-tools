@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import socket
+import sys
 import threading
 import json
 from concurrent.futures import ThreadPoolExecutor
@@ -188,15 +189,20 @@ class Shelly:
         self._executor.shutdown(wait=True)
 
 async def main():
-    config = load_config()
-    logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                        level=config["logging"]["level"], )
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c", "--config", default="config.json",
+        help="path to config.json", )
     parser.add_argument(
         "-d", "--debug", default=False,
         action=argparse.BooleanOptionalAction,
         help="sets logging level to debug, for debugging from cmd", )
     args = parser.parse_args()
+
+    config = load_config(args.config)
+    logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                        level=config["logging"]["level"], )
+
     if args.debug:
         logging.getLogger("dtsu666service").setLevel(logging.DEBUG)
         logging.getLogger("shelly").setLevel(logging.DEBUG)
@@ -209,7 +215,7 @@ async def main():
         shelly.start()
         # läuft "für immer"
         await asyncio.Event().wait()
-    except KeyboardInterrupt:
+    except (asyncio.CancelledError, KeyboardInterrupt):
         pass
     finally:
         await dtsu.stop()
@@ -218,4 +224,6 @@ async def main():
         _logger.info("Emulator stopped.")
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(main())

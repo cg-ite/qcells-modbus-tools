@@ -18,17 +18,18 @@ def create_mqtt_client(cfg):
         username=cfg["username"],
         password=cfg["password"],
         keepalive=60,
+        timeout=cfg.get("timeout", 10),
     )
 
 
 class DTSU666MqttHa:
     def __init__(self, cfg):
         self.client = create_mqtt_client(cfg)
+        self.device = dtsu666_device()
 
         self.discovery_prefix = "homeassistant"
         self.availability_topic = f"{self.get_mqtt_prefix()}/availability"
 
-        self.device = dtsu666_device()
 
     async def connect(self):
         await self.client.__aenter__()

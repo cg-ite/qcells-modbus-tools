@@ -5,7 +5,7 @@ description = "Some python tools for QCells Q.VOLT P(5-15)T Inverter (SolarX Mic
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "aiomqtt>=2.4.0",
+    "aiomqtt==2.5.0",
     "pymodbus>=3.11.4",
     "pyserial>=3.5",
 ]
