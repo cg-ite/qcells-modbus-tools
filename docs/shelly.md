@@ -98,7 +98,11 @@ Type=simple
 User=modbus
 Group=modbus
 WorkingDirectory=/opt/qcells-modbus-tools
+# ohne mqtt diese Zeile:
 ExecStart=/var/lib/modbus/.local/bin/uv run shelly.py
+
+# wenn die dtsu666 Werte per mqtt übertragen werden sollen: 
+# ExecStart=/var/lib/modbus/.local/bin/uv run shelly.py -m
 Restart=always
 RestartSec=5
 # Logging über Journalctl
