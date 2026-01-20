@@ -202,6 +202,10 @@ async def main():
                         action=argparse.BooleanOptionalAction,
                         help="enables mqtt client for publishing the data to a mqtt server", )
 
+    parser.add_argument("-t", "--test-mqtt", default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help="runs the loop 3 times with example data to test mqtt publish", )
+
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -227,7 +231,9 @@ async def main():
             logging.info("Continuing in debug mode without MQTT...")
             mqtt_client = None
 
-    dtsu = Dtsu666Service(config,mqtt_client=mqtt_client)
+    dtsu = Dtsu666Service(config,
+                          mqtt_client=mqtt_client,
+                          test_mode=args.test_mqtt)
     shelly = Shelly(cfg=config, powermeter=dtsu)
 
     try:
