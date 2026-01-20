@@ -20,6 +20,7 @@ class Dtsu666Service:
             self,
             cfg,
             mqtt_client=None,
+            test_mode=False,
     ):
         self.reader = None # Dtsu666Reader(cfg['dtsu']) -> falscher thread/event loop bei Aufruf von shelly
         self.dtsu_conf = cfg['dtsu']
@@ -27,6 +28,7 @@ class Dtsu666Service:
         self.full_interval = cfg['dtsu-service']['full-interval-s']
 
         self.mqtt_client = mqtt_client
+        self.test_mode = test_mode
 
         self._task: asyncio.Task | None = None
         self._running = asyncio.Event()
@@ -80,7 +82,8 @@ class Dtsu666Service:
     async def start(self):
         _logger.info("Starting DTSU666 service")
         self.reader = Dtsu666Reader(self.dtsu_conf)
-        await self.reader.connect()
+        if not self.test_mode:
+            await self.reader.connect()
 
         self._running.set()
         self._task = asyncio.create_task(self._run_loop())
@@ -96,11 +99,13 @@ class Dtsu666Service:
             except asyncio.CancelledError:
                 pass
 
-        self.reader.close()
+        if not self.test_mode:
+            self.reader.close()
 
     async def _run_loop(self):
         """ Reads the powers every 0.250 sec and all stats every 15 sec """
         _logger.info(f"Polling loop started ({self.interval}s)")
+        full_read_count = 0
 
         try:
             while self._running.is_set():
@@ -108,17 +113,53 @@ class Dtsu666Service:
                 now = time.monotonic()
 
                 try:
+                # Alle Register lesen
                     if now - self._last_full_read >= self.full_interval:
-                        data = await self.reader.read_stats()
+                        if self.test_mode:
+                            example_data = self.reader.get_example_data()
+                            # Umwandeln in das Format, das read_stats() liefert (Dictionary mit Adressen als Keys)
+                            data = {}
+                            for block in BLOCK_STATS:
+                                addr = block["address"]
+                                count = block["count"]
+                                # Beispieldaten für diesen Block sammeln
+                                block_values = []
+                                for i in range(count // 2):
+                                    reg_addr = addr + i * 2
+                                    val = example_data.get(reg_addr, 0.0)
+                                    factor = REGISTERS.get(reg_addr, {}).get("factor", 1.0)
+                                    block_values.append(val / factor)
+                                data[addr] = {"values": block_values}
+                        else:
+                            data = await self.reader.read_stats()
+
                         if data is not None:
                             await self._update_cache("full", data)
                             self._last_full_read = now
 
                             # 🔹 MQTT async publish (fire & forget)
                             asyncio.create_task(self._publish_full_read_mqtt(data))
+                            
+                            if self.test_mode:
+                                full_read_count += 1
+                                if full_read_count >= 3:
+                                    _logger.info("Test mode: Finished 3 full intervals. Stopping.")
+                                    self._running.clear()
 
+                # nur Power-Register für Shelly lesen
                     else:
-                        data = await self.reader.read_actpowers_block()
+                        if self.test_mode:
+                            # Einfach Beispieldaten für Power-Block nehmen (0x2012, count 8)
+                            example_data = self.reader.get_example_data()
+                            data = [
+                                example_data.get(0x2012, 0.0),
+                                example_data.get(0x2014, 0.0),
+                                example_data.get(0x2016, 0.0),
+                                example_data.get(0x2018, 0.0),
+                            ]
+                        else:
+                            data = await self.reader.read_actpowers_block()
+                            
                         if data is not None:
                             await self._update_cache("powers", data)
 
@@ -138,10 +179,10 @@ class Dtsu666Service:
 
         for block in BLOCK_STATS:
             # Adressen pro block berechnen, count/2 da jede Adresse zwei register lang ist
-            addresses = [block['address'] + i * 2 for i in range(block['count']/2)]
+            addresses = [block['address'] + i * 2 for i in range(block['count'] // 2)]
 
             for i, adr in enumerate(addresses):
-                value = data['values'][i] * REGISTERS[adr]['factor']
+                value = data[block['address']]['values'][i] * REGISTERS[adr]['factor']
                 try:
                     await self.mqtt_client.publish(adr, value)
 
@@ -182,6 +223,10 @@ async def main():
     parser.add_argument("-m", "--mqtt", default=False,
                         action=argparse.BooleanOptionalAction,
                         help="enables mqtt client for publishing the data to a mqtt server",)
+
+    parser.add_argument("-t", "--test-mqtt", default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help="runs the loop 3 times with example data to test mqtt publish",)
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -194,39 +239,46 @@ async def main():
     mqtt_cfg = config.get("mqtt")
     mqtt_client = None
 
+    if (args.mqtt or args.test_mqtt) and mqtt_cfg:
+        mqtt_client = DTSU666MqttHa(mqtt_cfg)
+        try:
+            await mqtt_client.connect()
+            await mqtt_client.publish_discovery()
+        except Exception as e:
+            logging.error(f"Failed to connect to MQTT broker: {e}")
+            if not args.debug:
+                return
+            logging.info("Continuing in debug mode without MQTT...")
+            mqtt_client = None
+
     service = Dtsu666Service(
         config,
         mqtt_client=mqtt_client,
+        test_mode=args.test_mqtt
     )
 
-    # only start mqtt
-    if args.mqtt:
-        if mqtt_cfg:
-            mqtt_client = DTSU666MqttHa(mqtt_cfg)
-            try:
-                await mqtt_client.connect()
-                await mqtt_client.publish_discovery()
-            except Exception as e:
-                logging.error(f"Failed to connect to MQTT broker: {e}")
-                if not args.debug:
-                    return
-                logging.info("Continuing in debug mode without MQTT...")
-                mqtt_client = None
-
+    if args.mqtt or args.test_mqtt:
+        await service.start()
     else:
+        # Falls kein MQTT und kein Testmodus, wird der Service trotzdem gestartet?
+        # Im Originalcode war das ein else zu if args.mqtt.
         await service.start()
 
     try:
-        # läuft "für immer"
-        await asyncio.Event().wait()
+        if args.test_mqtt:
+            # Warten bis der Loop sich selbst beendet
+            while service._running.is_set():
+                await asyncio.sleep(1)
+        else:
+            # läuft "für immer"
+            await asyncio.Event().wait()
     except (asyncio.CancelledError, KeyboardInterrupt):
         pass
     finally:
-        if args.mqtt:
-            if mqtt_client:
-                await mqtt_client.disconnect()
-        else:
-            await service.stop()
+        if mqtt_client:
+            await mqtt_client.disconnect()
+        
+        await service.stop()
 
 
 if __name__ == "__main__":

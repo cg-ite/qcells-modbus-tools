@@ -52,6 +52,32 @@ class Dtsu666Reader:
         self.instrument.close()
         _logger.info("Close connection to DTSU666 serial port.")
 
+    def get_example_data(self):
+        """Returns example data for testing without modbus connection"""
+        return {
+            0x2006: 230.1,  # Voltage_Phase_A
+            0x2008: 229.8,  # Voltage_Phase_B
+            0x200A: 231.2,  # Voltage_Phase_C
+            0x200C: 1.5,    # Current_Phase_A
+            0x200E: 2.1,    # Current_Phase_B
+            0x2010: 1.8,    # Current_Phase_C
+            0x2012: 1.2,    # Total_Active_Power
+            0x2014: 0.3,    # Active_Power_Phase_A
+            0x2016: 0.5,    # Active_Power_Phase_B
+            0x2018: 0.4,    # Active_Power_Phase_C
+            0x201A: 0.1,    # Total_Reactive_Power
+            0x201C: 0.03,   # Reactive_Power_Phase_A
+            0x201E: 0.04,   # Reactive_Power_Phase_B
+            0x2020: 0.03,   # Reactive_Power_Phase_C
+            0x202A: 0.98,   # Total_Power_Factor
+            0x202C: 0.97,   # Power_Factor_Phase_A
+            0x202E: 0.99,   # Power_Factor_Phase_B
+            0x2030: 0.98,   # Power_Factor_Phase_C
+            0x2044: 50.01,  # Frequency
+            0x401E: 1234.5, # Total_Import_Energy
+            0x4028: 567.8,  # Total_Export_Energy
+        }
+
     async def read_actpowers_block(self):
         """ reads the act-power values with one modbus query for the shelly """
         address = TOTAL_ACTIVE_POWER
@@ -188,6 +214,11 @@ async def main():
         default=False,
         action=argparse.BooleanOptionalAction,
         help="reads whole stats blocks",)
+    parser.add_argument(
+        "-e", "--example",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="returns example data without modbus connection",)
     args = parser.parse_args()
 
     # load defaults from config.json
@@ -199,6 +230,15 @@ async def main():
     reader = Dtsu666Reader(
         cfg=config["dtsu"]
     )
+
+    if args.example:
+        values = reader.get_example_data()
+        for addr, val in values.items():
+            name = REGISTERS.get(addr, {}).get("name", f"Unknown({hex(addr)})")
+            unit = REGISTERS.get(addr, {}).get("unit", "")
+            print(f"{name:25}: {val:>8.2f} {unit}")
+        return
+
     await reader.connect()
     values = None
     if args.power:
