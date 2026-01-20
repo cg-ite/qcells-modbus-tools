@@ -11,6 +11,7 @@ from pathlib import Path
 
 from config import load_config
 from dtsu666service import Dtsu666Service
+from homeassistant.dtsu666mqttha import DTSU666MqttHa
 
 _logger = logging.getLogger("shelly")
 
@@ -197,6 +198,10 @@ async def main():
         "-d", "--debug", default=False,
         action=argparse.BooleanOptionalAction,
         help="sets logging level to debug, for debugging from cmd", )
+    parser.add_argument("-m", "--mqtt", default=False,
+                        action=argparse.BooleanOptionalAction,
+                        help="enables mqtt client for publishing the data to a mqtt server", )
+
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -207,7 +212,22 @@ async def main():
         logging.getLogger("dtsu666service").setLevel(logging.DEBUG)
         logging.getLogger("shelly").setLevel(logging.DEBUG)
 
-    dtsu = Dtsu666Service(config)
+    mqtt_cfg = config.get("mqtt")
+    mqtt_client = None
+
+    if (args.mqtt or args.test_mqtt) and mqtt_cfg:
+        mqtt_client = DTSU666MqttHa(mqtt_cfg)
+        try:
+            await mqtt_client.connect()
+            await mqtt_client.publish_discovery()
+        except Exception as e:
+            logging.error(f"Failed to connect to MQTT broker: {e}")
+            if not args.debug:
+                return
+            logging.info("Continuing in debug mode without MQTT...")
+            mqtt_client = None
+
+    dtsu = Dtsu666Service(config,mqtt_client=mqtt_client)
     shelly = Shelly(cfg=config, powermeter=dtsu)
 
     try:
