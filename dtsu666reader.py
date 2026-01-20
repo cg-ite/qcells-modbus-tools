@@ -163,7 +163,6 @@ class Dtsu666Reader:
     async def read_value(self, address, count=1, factor=1.0):
         """Reads all register starting at address from the DTSU666, mostly for debugging reason """
         res = ModbusReading()
-        data = []
         try:
             rr = await self.instrument.read_holding_registers(address,
                                                               count=count,
@@ -183,13 +182,13 @@ class Dtsu666Reader:
                 data_type=self.instrument.DATATYPE.FLOAT32,
                 string_encoding="ascii")
             if isinstance(raw, list):
-                data = [factor * p for p in raw]
+                res.readings = [factor * p for p in raw]
             else:
-                data = raw * factor
+                res.readings = [raw * factor]
         except Exception as e:
             _logger.error(f"Read error@ {address}: Exception {e} ")
-            data = None
-        return data
+            return None
+        return res
 
 async def main():
     """Reads the consumption data of a dtsu666 once"""

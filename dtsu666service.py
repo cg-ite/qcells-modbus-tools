@@ -9,7 +9,7 @@ from pathlib import Path
 
 from config import load_config
 from dtsu666_constants import BLOCK_STATS, REGISTERS
-from dtsu666reader import Dtsu666Reader
+from dtsu666reader import Dtsu666Reader, ModbusReading
 from homeassistant.dtsu666mqttha import DTSU666MqttHa
 
 _logger = logging.getLogger("dtsu666service")
@@ -129,7 +129,7 @@ class Dtsu666Service:
                                     val = example_data.get(reg_addr, 0.0)
                                     factor = REGISTERS.get(reg_addr, {}).get("factor", 1.0)
                                     block_values.append(val / factor)
-                                data[addr] = {"values": block_values}
+                                data[addr] = ModbusReading(readings=block_values)
                         else:
                             data = await self.reader.read_stats()
 
@@ -182,7 +182,16 @@ class Dtsu666Service:
             addresses = [block['address'] + i * 2 for i in range(block['count'] // 2)]
 
             for i, adr in enumerate(addresses):
-                value = data[block['address']]['values'][i] * REGISTERS[adr]['factor']
+                reading = data[block['address']]
+                if reading is None or not hasattr(reading, 'readings') or reading.readings is None:
+                    _logger.debug(f"No readings for block {hex(block['address'])}")
+                    continue
+                
+                if i >= len(reading.readings):
+                    _logger.warning(f"Index {i} out of range for block {hex(block['address'])} (len={len(reading.readings)})")
+                    continue
+
+                value = reading.readings[i] * REGISTERS[adr]['factor']
                 try:
                     await self.mqtt_client.publish(adr, value)
 
