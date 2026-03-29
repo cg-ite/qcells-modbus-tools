@@ -46,15 +46,21 @@ class DTSU666MqttHa:
                 f"{component}/dtsu666/{s["topic"]}/config"
             )
             s["available"] = False
-            await self.client.publish(topic, json.dumps(s), retain=True)
+            try:
+                await self.client.publish(topic, json.dumps(s), retain=True)
+            except Exception:
+                pass
 
     # ---------- Availability ----------
     def set_availability(self, online: bool):
-        self.client.publish(
-            self.availability_topic,
-            "online" if online else "offline",
-            retain=True,
-        )
+        try:
+            self.client.publish(
+                self.availability_topic,
+                "online" if online else "offline",
+                retain=True,
+            )
+        except Exception:
+            pass
 
     def get_mqtt_prefix(self):
         return self.device['model']
@@ -63,14 +69,18 @@ class DTSU666MqttHa:
 
     # ---------- Data ----------
     async def publish(self, address, value):
-        await self.client.publish(
-            f"{self.get_mqtt_prefix()}/{self.get_mqtt_topic(address)}",
-            json.dumps({
-                f"{self.get_mqtt_topic(address)}": value
-            }),
-            qos=1,
-            retain=True,
-        )
+        try:
+            await self.client.publish(
+                f"{self.get_mqtt_prefix()}/{self.get_mqtt_topic(address)}",
+                json.dumps({
+                    f"{self.get_mqtt_topic(address)}": value
+                }),
+                qos=1,
+                retain=True,
+            )
+        except Exception as e:
+            # Handle queue full or other publish errors gracefully
+            pass
 
     # ---------- Diagnostic ----------
     def publish_diagnostic(self, code, **extra):
@@ -79,11 +89,14 @@ class DTSU666MqttHa:
             "error": MODBUS_EXCEPTIONS[code],
             **extra,
         }
-        self.client.publish(
-            f"{self.get_mqtt_prefix()}/Modbus/Diagnostic",
-            json.dumps(payload),
-            qos=1,
-            retain=True, )
+        try:
+            self.client.publish(
+                f"{self.get_mqtt_prefix()}/Modbus/Diagnostic",
+                json.dumps(payload),
+                qos=1,
+                retain=True, )
+        except Exception:
+            pass
 
 
 class ModbusHealth:
@@ -94,20 +107,26 @@ class ModbusHealth:
     def ok(self):
         if self.state != "ok":
             self.state = "ok"
-            self.ha.client.publish(
-                "DTSU666/Modbus/Health",
-                "ok",
-                retain=True,
-            )
+            try:
+                self.ha.client.publish(
+                    "DTSU666/Modbus/Health",
+                    "ok",
+                    retain=True,
+                )
+            except Exception:
+                pass
 
     def error(self):
         if self.state != "error":
             self.state = "error"
-            self.ha.client.publish(
-                "DTSU666/Modbus/Health",
-                "error",
-                retain=True,
-            )
+            try:
+                self.ha.client.publish(
+                    "DTSU666/Modbus/Health",
+                    "error",
+                    retain=True,
+                )
+            except Exception:
+                pass
 
 
 def generate_phase_sensors():

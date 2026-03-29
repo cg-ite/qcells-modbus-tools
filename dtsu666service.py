@@ -196,7 +196,10 @@ class Dtsu666Service:
                     await self.mqtt_client.publish(adr, value)
 
                 except Exception as e:
-                    _logger.exception(f"Register: {REGISTERS[adr]['name']}, ex: {e}", e)
+                    if "Message queue full" in str(e):
+                        _logger.warning(f"MQTT queue full, dropping message for register: {REGISTERS[adr]['name']}")
+                    else:
+                        _logger.error(f"Failed to publish register: {REGISTERS[adr]['name']}, ex: {e}")
 
     async def _update_cache(self, key, data):
         async with self._cache_lock:
