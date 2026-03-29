@@ -124,7 +124,7 @@ def generate_phase_sensors():
             "state_topic": f"{dtsu666_device()['model']}/{reg['name']}",
             "device_class": reg['device_class'],
             "unit_of_measurement": reg.get("unit"),
-            "state_class": "measurement",
+            "state_class": reg.get("state_class", "measurement"),
             "value_template": f"{{{{ value_json.{reg['name']} }}}}",
             "force_update": reg.get("force_update", False),
             "device": dtsu666_device(),
@@ -181,20 +181,6 @@ DTSU_SENSORS = [
         "has_entity_name": True,
     },
     *generate_phase_sensors(),
-
-    # Non-phase Sensors (Frequency, Totals, Energy)
-    {
-        "topic": "frequency",
-        "unique_id": f"{dtsu666_device()['identifiers'][0]}_frequency",
-        "name": "Frequency",
-        "state_topic": f"{dtsu666_device()['model']}/Frequency",
-        "device_class": "frequency",
-        "unit_of_measurement": "Hz",
-        "state_class": "measurement",
-        "value_template": "{{ value_json.Frequency }}",
-        "device": dtsu666_device(),
-        "has_entity_name": True,
-    },
 ]
 
 MODBUS_EXCEPTIONS = {
