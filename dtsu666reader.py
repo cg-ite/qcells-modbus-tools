@@ -128,6 +128,7 @@ class Dtsu666Reader:
             except Exception as e:
                 _logger.error(f"Read error@ {address}: Exception {e} ")
                 data[address] = None
+                await asyncio.sleep(0.5)
         return data
 
     async def read_stats(self):
