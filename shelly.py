@@ -211,6 +211,8 @@ async def main():
     config = load_config(args.config)
     logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
                         level=config["logging"]["level"], )
+    logging.getLogger("pymodbus").setLevel(logging.WARNING)
+    logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
 
     if args.debug:
         logging.getLogger("dtsu666service").setLevel(logging.DEBUG)
