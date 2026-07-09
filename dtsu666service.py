@@ -75,6 +75,7 @@ class Dtsu666Service:
         root.addHandler(debug_file)
 
         logging.getLogger("pymodbus").setLevel(logging.WARNING)
+        logging.getLogger("pymodbus.logging").setLevel(logging.CRITICAL)
         if log_level == logging.DEBUG:
             logging.getLogger("pymodbus.transport").setLevel(logging.DEBUG)
             logging.getLogger("pymodbus.framer").setLevel(logging.DEBUG)

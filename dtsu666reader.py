@@ -99,7 +99,7 @@ class Dtsu666Reader:
                 data_type = self.instrument.DATATYPE.FLOAT32)
             data = [spec["factor"] * p for p in raw]
         except Exception as e:
-            _logger.error(f"Read error@ {address}: Exception {e} ")
+            _logger.warning(f"Read error@ {address}: Exception {e} ")
             data = None
         return data
 
@@ -186,7 +186,7 @@ class Dtsu666Reader:
             else:
                 res.readings = [raw * factor]
         except Exception as e:
-            _logger.error(f"Read error@ {address}: Exception {e} ")
+            _logger.warning(f"Read error@ {address}: Exception {e} ")
             return None
         return res
 
