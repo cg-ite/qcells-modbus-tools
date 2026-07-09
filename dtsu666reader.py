@@ -78,6 +78,16 @@ class Dtsu666Reader:
             0x4028: 567.8,  # Total_Export_Energy
         }
 
+    async def _flush_serial_input(self):
+        """Flush stale serial data after a read timeout to prevent cascading failures."""
+        await asyncio.sleep(0.5)  # let asyncio deliver pending serial callbacks
+        try:
+            transport = getattr(self.instrument, 'transport', None)
+            if transport and hasattr(transport, 'sync_serial') and transport.sync_serial:
+                transport.sync_serial.reset_input_buffer()
+        except Exception:
+            pass
+
     async def read_actpowers_block(self):
         """ reads the act-power values with one modbus query for the shelly """
         address = TOTAL_ACTIVE_POWER
@@ -100,6 +110,7 @@ class Dtsu666Reader:
             data = [spec["factor"] * p for p in raw]
         except Exception as e:
             _logger.warning(f"Read error@ {address}: Exception {e} ")
+            await self._flush_serial_input()
             data = None
         return data
 
@@ -126,9 +137,9 @@ class Dtsu666Reader:
                     string_encoding="ascii")
                 data[address] = raw * spec["factor"]
             except Exception as e:
-                _logger.error(f"Read error@ {address}: Exception {e} ")
+                _logger.warning(f"Read error@ {address}: Exception {e} ")
                 data[address] = None
-                await asyncio.sleep(0.5)
+                await self._flush_serial_input()
         return data
 
     async def read_stats(self):
@@ -189,6 +200,7 @@ class Dtsu666Reader:
                 res.readings = [raw * factor]
         except Exception as e:
             _logger.warning(f"Read error@ {address}: Exception {e} ")
+            await self._flush_serial_input()
             return None
         return res
 
