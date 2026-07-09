@@ -137,6 +137,7 @@ class Dtsu666Reader:
         data = {}
         for block in BLOCK_STATS:
             data[block["address"]] = await self.read_value(block["address"], block["count"])
+            await asyncio.sleep(0.1)
         return data
 
     def check_exception(self, result):
